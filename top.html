@@ -5,35 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LIFES - ホーム</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      height: 100vh;
       font-family: sans-serif;
       background-color: #ffffff;
       display: flex;
       flex-direction: column;
-      height: 100vh;
     }
-    header {
-      text-align: center;
-      padding: 20px 0;
-    }
-    header span {
-      font-size: 36px;
-      font-weight: bold;
-      letter-spacing: 8px;
-    }
-    .L { color: #f44336; }
-    .I { color: #ff9800; }
-    .F { color: #ffeb3b; }
-    .E { color: #4caf50; }
-    .S { color: #2196f3; }
 
     main {
       flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      padding-bottom: 80px; /* ボトムナビ分の余白 */
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
       gap: 20px;
     }
 
@@ -48,6 +37,10 @@
     }
 
     .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
       display: flex;
       justify-content: space-around;
       padding: 10px 0;
@@ -85,10 +78,6 @@
   </style>
 </head>
 <body>
-  <header>
-    <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
-  </header>
-
   <main>
     <div class="card">
       <div class="clock-time" id="clock-time">--:--</div>
