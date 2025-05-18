@@ -79,8 +79,26 @@
   <script>
     async function loadPage(file) {
       const res = await fetch(file);
-      const html = await res.text();
-      document.getElementById("main-content").innerHTML = html;
+      const htmlText = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+
+      const main = document.getElementById("main-content");
+      main.innerHTML = "";
+      for (const node of doc.body.childNodes) {
+        main.appendChild(node.cloneNode(true));
+      }
+
+      const scripts = doc.querySelectorAll("script");
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement("script");
+        if (oldScript.src) {
+          newScript.src = oldScript.src;
+        } else {
+          newScript.textContent = oldScript.textContent;
+        }
+        document.body.appendChild(newScript);
+      });
     }
 
     window.onload = () => {
