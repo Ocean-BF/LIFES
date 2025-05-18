@@ -1,7 +1,7 @@
 <div class="panel">
   <h2 class="panel-title">アカウント</h2>
   <label>ログイン中のメールアドレス:</label>
-  <div class="text" id="user-email">読み込み中...</div>
+  <div class="text" id="user-email">取得中...</div>
   <label for="new-password">新しいパスワード:</label>
   <input type="password" id="new-password" placeholder="新しいパスワードを入力">
   <button onclick="changePassword()">パスワードを変更</button>
@@ -10,13 +10,13 @@
 <div class="panel">
   <h2 class="panel-title">表示設定</h2>
   <label for="bg-color">背景色:</label>
-  <input type="color" id="bg-color">
+  <input type="color" id="bg-color" value="#f0f4f8" style="height: 40px; padding: 0; border: none;">
 
   <label for="bg-file">背景画像を選択:</label>
   <input type="file" id="bg-file" accept="image/*">
 
   <label for="card-opacity">カードの透明度:</label>
-  <input type="range" id="card-opacity" min="0.5" max="1" step="0.05">
+  <input type="range" id="card-opacity" min="0.5" max="1" step="0.05" value="0.9">
 
   <button onclick="resetStyles()" class="outline">スタイルをリセット</button>
 </div>
@@ -83,17 +83,24 @@
   }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const client = supabase.createClient(
     "https://mzuqsfoqkaopxhyggwyk.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
   );
 
-  client.auth.getUser().then(({ data: { user } }) => {
-    if (user) {
+  async function loadUser() {
+    const {
+      data: { user },
+      error
+    } = await client.auth.getUser();
+    if (error || !user) {
+      document.getElementById("user-email").textContent = "取得できませんでした";
+    } else {
       document.getElementById("user-email").textContent = user.email;
     }
-  });
+  }
 
   async function changePassword() {
     const pw = document.getElementById("new-password").value;
@@ -106,7 +113,6 @@
     else alert("パスワードを変更しました。");
   }
 
-  // 背景スタイル
   document.getElementById("bg-color").oninput = (e) => {
     const color = e.target.value;
     document.documentElement.style.setProperty("--bg-color", color);
@@ -150,15 +156,23 @@
   }
 
   window.onload = () => {
+    loadUser();
+
     const bg = localStorage.getItem("lifes_bg_color");
     const img = localStorage.getItem("lifes_bg_image");
     const op = localStorage.getItem("lifes_card_opacity");
-    if (bg) document.documentElement.style.setProperty("--bg-color", bg);
+    if (bg) {
+      document.documentElement.style.setProperty("--bg-color", bg);
+      document.getElementById("bg-color").value = bg;
+    }
     if (img) {
       document.body.style.backgroundImage = `url('${img}')`;
       document.body.style.backgroundSize = "cover";
       document.body.style.backgroundRepeat = "no-repeat";
     }
-    if (op) document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+    if (op) {
+      document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+      document.getElementById("card-opacity").value = op;
+    }
   };
 </script>
