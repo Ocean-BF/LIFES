@@ -1,75 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LIFES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LIFES - ログイン</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       margin: 0;
       font-family: sans-serif;
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') no-repeat center center fixed;
-      background-size: cover;
+      background: linear-gradient(to bottom, #e0f7fa, #fff);
       display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
       height: 100vh;
-      color: #333;
     }
-    .app-grid {
-      flex: 1;
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-gap: 15px;
-      box-sizing: border-box;
+    h1 span {
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 8px;
     }
-    .app-icon {
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 16px;
-      padding: 20px 10px;
-      text-align: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      font-size: 14px;
-    }
-    .app-icon span {
-      font-size: 24px;
-      display: block;
-      margin-bottom: 8px;
-    }
-    .bottom-nav {
+    h1 .L { color: #f44336; }
+    h1 .I { color: #ff9800; }
+    h1 .F { color: #ffeb3b; }
+    h1 .E { color: #4caf50; }
+    h1 .S { color: #2196f3; }
+    .login-box {
+      margin-top: 20px;
       display: flex;
-      justify-content: space-around;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px 0;
-      border-top: 1px solid #ccc;
+      flex-direction: column;
+      gap: 12px;
+      width: 80%;
+      max-width: 300px;
     }
-    .bottom-nav div {
-      text-align: center;
-      font-size: 12px;
+    input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
-    .bottom-nav span {
-      font-size: 20px;
-      display: block;
+    button {
+      padding: 10px;
+      font-size: 16px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #43a047;
     }
   </style>
 </head>
 <body>
-  <div class="app-grid">
-    <div class="app-icon"><span>🧮</span>Calculator</div>
-    <div class="app-icon"><span>🛒</span>Comparison<br>Checker</div>
-    <div class="app-icon"><span>🏷️</span>Price Checker</div>
-    <div class="app-icon"><span>📒</span>Setup</div>
-    <div class="app-icon"><span>📄</span>Lotes</div>
-    <div class="app-icon"><span>🗓️</span>Expiration<br>Checker</div>
-    <div class="app-icon"><span>🥕</span>Shopping List</div>
-    <div class="app-icon"><span>📅</span>Payment<br>Reminder</div>
-    <div class="app-icon"><span>⚙️</span>Settings</div>
+  <h1>
+    <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
+  </h1>
+  <div class="login-box">
+    <input type="email" id="email" placeholder="メールアドレス" />
+    <input type="password" id="password" placeholder="パスワード" />
+    <button onclick="login()">ログイン</button>
+    <button onclick="signup()">新規登録</button>
   </div>
-  <div class="bottom-nav">
-    <div><span>🛍️</span>Shopping</div>
-    <div><span>📋</span>List</div>
-    <div><span>📘</span>School</div>
-    <div><span>⚙️</span>Settings</div>
-  </div>
+
+  <script>
+    const supabase = supabase.createClient(
+      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+    );
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert("ログイン失敗: " + error.message);
+      } else {
+        localStorage.setItem("lifes_login", "true");
+        location.href = "top.html";
+      }
+    }
+
+    async function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        alert("登録失敗: " + error.message);
+      } else {
+        alert("登録完了！確認メールをご確認ください。");
+      }
+    }
+
+    // 既にログイン済みなら自動で遷移
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        localStorage.setItem("lifes_login", "true");
+        location.href = "top.html";
+      }
+    });
+  </script>
 </body>
 </html>
