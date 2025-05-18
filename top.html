@@ -64,6 +64,17 @@
       display: block;
       font-size: 20px;
     }
+
+    .clock-time {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .clock-date {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -73,7 +84,8 @@
 
   <main>
     <div class="card">
-      <div id="clock">--:--</div>
+      <div class="clock-time" id="clock-time">--:--</div>
+      <div class="clock-date" id="clock-date">--/--/--</div>
     </div>
     <div class="card">
       <div>東京の天気：晴れ（仮）</div>
@@ -96,7 +108,12 @@
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
       const m = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById("clock").textContent = h + ":" + m;
+      const y = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const wd = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
+      document.getElementById("clock-time").textContent = h + ":" + m;
+      document.getElementById("clock-date").textContent = `${y}/${mo}/${d}（${wd}）`;
     }
     setInterval(updateClock, 1000);
     updateClock();
