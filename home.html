@@ -49,8 +49,8 @@
     document.getElementById("clock-time").textContent = h + ":" + m;
     document.getElementById("clock-date").textContent = `${y}/${mo}/${d}（${wd}）`;
   }
+  updateClock(); // ← 初期表示用
   setInterval(updateClock, 1000);
-  updateClock();
 
   async function fetchWeather(lat, lon) {
     const apiKey = "2e182b7d1ed7a9117780e6c105646376";
@@ -75,7 +75,7 @@
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => fetchWeather(pos.coords.latitude, pos.coords.longitude),
-        err => fetchWeather(34.6901, 135.1956) // 神戸 fallback
+        err => fetchWeather(34.6901, 135.1956)
       );
     } else {
       fetchWeather(34.6901, 135.1956);
