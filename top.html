@@ -10,20 +10,34 @@
       padding: 0;
       height: 100vh;
       font-family: sans-serif;
-      background-color: #ffffff;
+      background: linear-gradient(to bottom, #e3f2fd, #ffffff);
       display: flex;
       flex-direction: column;
     }
+
+    .logo {
+      text-align: center;
+      padding: 20px 0 0;
+      font-size: 36px;
+      font-weight: bold;
+      letter-spacing: 8px;
+    }
+    .logo .L { color: #f44336; }
+    .logo .I { color: #ff9800; }
+    .logo .F { color: #ffeb3b; }
+    .logo .E { color: #4caf50; }
+    .logo .S { color: #2196f3; }
 
     main {
       flex: 1;
       overflow-y: auto;
       padding: 20px;
-      padding-bottom: 80px; /* ボトムナビ分の余白 */
+      padding-bottom: 100px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 20px;
+      box-sizing: border-box;
     }
 
     .card {
@@ -32,7 +46,7 @@
       padding: 15px;
       border-radius: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      background: #f9f9f9;
+      background: rgba(255, 255, 255, 0.85);
       text-align: center;
     }
 
@@ -45,7 +59,8 @@
       justify-content: space-around;
       padding: 10px 0;
       border-top: 1px solid #ccc;
-      background: #ffffff;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
     }
     .bottom-nav a {
       text-decoration: none;
@@ -78,6 +93,10 @@
   </style>
 </head>
 <body>
+  <div class="logo">
+    <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
+  </div>
+
   <main>
     <div class="card">
       <div class="clock-time" id="clock-time">--:--</div>
