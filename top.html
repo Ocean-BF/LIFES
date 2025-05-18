@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIFES</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color: #333;
+    }
+    .app-grid {
+      flex: 1;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 15px;
+      box-sizing: border-box;
+    }
+    .app-icon {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 16px;
+      padding: 20px 10px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      font-size: 14px;
+    }
+    .app-icon span {
+      font-size: 24px;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 0;
+      border-top: 1px solid #ccc;
+    }
+    .bottom-nav div {
+      text-align: center;
+      font-size: 12px;
+    }
+    .bottom-nav span {
+      font-size: 20px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-grid">
+    <div class="app-icon"><span>🧮</span>Calculator</div>
+    <div class="app-icon"><span>🛒</span>Comparison<br>Checker</div>
+    <div class="app-icon"><span>🏷️</span>Price Checker</div>
+    <div class="app-icon"><span>📒</span>Setup</div>
+    <div class="app-icon"><span>📄</span>Lotes</div>
+    <div class="app-icon"><span>🗓️</span>Expiration<br>Checker</div>
+    <div class="app-icon"><span>🥕</span>Shopping List</div>
+    <div class="app-icon"><span>📅</span>Payment<br>Reminder</div>
+    <div class="app-icon"><span>⚙️</span>Settings</div>
+  </div>
+  <div class="bottom-nav">
+    <div><span>🛍️</span>Shopping</div>
+    <div><span>📋</span>List</div>
+    <div><span>📘</span>School</div>
+    <div><span>⚙️</span>Settings</div>
+  </div>
+</body>
+</html>
