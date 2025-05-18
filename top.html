@@ -1,75 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LIFES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LIFES - ホーム</title>
   <style>
     body {
       margin: 0;
       font-family: sans-serif;
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') no-repeat center center fixed;
-      background-size: cover;
+      background-color: #ffffff;
       display: flex;
       flex-direction: column;
       height: 100vh;
-      color: #333;
     }
-    .app-grid {
-      flex: 1;
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-gap: 15px;
-      box-sizing: border-box;
-    }
-    .app-icon {
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 16px;
-      padding: 20px 10px;
+    header {
       text-align: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      font-size: 14px;
+      padding: 20px 0;
     }
-    .app-icon span {
-      font-size: 24px;
-      display: block;
-      margin-bottom: 8px;
+    header span {
+      font-size: 36px;
+      font-weight: bold;
+      letter-spacing: 8px;
     }
+    .L { color: #f44336; }
+    .I { color: #ff9800; }
+    .F { color: #ffeb3b; }
+    .E { color: #4caf50; }
+    .S { color: #2196f3; }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .card {
+      width: 90%;
+      max-width: 400px;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: #f9f9f9;
+      text-align: center;
+    }
+
     .bottom-nav {
       display: flex;
       justify-content: space-around;
-      background: rgba(255, 255, 255, 0.9);
       padding: 10px 0;
       border-top: 1px solid #ccc;
+      background: #ffffff;
     }
-    .bottom-nav div {
-      text-align: center;
+    .bottom-nav a {
+      text-decoration: none;
+      color: #444;
       font-size: 12px;
+      text-align: center;
     }
     .bottom-nav span {
-      font-size: 20px;
       display: block;
+      font-size: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="app-grid">
-    <div class="app-icon"><span>🧮</span>Calculator</div>
-    <div class="app-icon"><span>🛒</span>Comparison<br>Checker</div>
-    <div class="app-icon"><span>🏷️</span>Price Checker</div>
-    <div class="app-icon"><span>📒</span>Setup</div>
-    <div class="app-icon"><span>📄</span>Lotes</div>
-    <div class="app-icon"><span>🗓️</span>Expiration<br>Checker</div>
-    <div class="app-icon"><span>🥕</span>Shopping List</div>
-    <div class="app-icon"><span>📅</span>Payment<br>Reminder</div>
-    <div class="app-icon"><span>⚙️</span>Settings</div>
-  </div>
-  <div class="bottom-nav">
-    <div><span>🛍️</span>Shopping</div>
-    <div><span>📋</span>List</div>
-    <div><span>📘</span>School</div>
-    <div><span>⚙️</span>Settings</div>
-  </div>
+  <header>
+    <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
+  </header>
+
+  <main>
+    <div class="card">
+      <div id="clock">--:--</div>
+    </div>
+    <div class="card">
+      <div>東京の天気：晴れ（仮）</div>
+    </div>
+    <div class="card">
+      <div>今日の予定：買い物／洗濯</div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="top.html"><span>🏠</span>ホーム</a>
+    <a href="life.html"><span>🛍️</span>生活</a>
+    <a href="edu.html"><span>📘</span>教育</a>
+    <a href="health.html"><span>💊</span>健康</a>
+    <a href="settings.html"><span>⚙️</span>設定</a>
+  </nav>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById("clock").textContent = h + ":" + m;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
 </body>
 </html>
