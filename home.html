@@ -39,17 +39,20 @@
 
 <script>
   function updateClock() {
+    const time = document.getElementById("clock-time");
+    const date = document.getElementById("clock-date");
+    if (!time || !date) return;
+
     const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    const y = now.getFullYear();
-    const mo = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const wd = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
-    document.getElementById("clock-time").textContent = h + ":" + m;
-    document.getElementById("clock-date").textContent = `${y}/${mo}/${d}（${wd}）`;
+    time.textContent = now.getHours().toString().padStart(2, '0') + ":" +
+                       now.getMinutes().toString().padStart(2, '0');
+    date.textContent = now.getFullYear() + "/" +
+                       (now.getMonth() + 1).toString().padStart(2, '0') + "/" +
+                       now.getDate().toString().padStart(2, '0') + "（" +
+                       "日月火水木金土"[now.getDay()] + "）";
   }
-  updateClock(); // ← 初期表示用
+
+  updateClock();
   setInterval(updateClock, 1000);
 
   async function fetchWeather(lat, lon) {
@@ -75,7 +78,7 @@
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => fetchWeather(pos.coords.latitude, pos.coords.longitude),
-        err => fetchWeather(34.6901, 135.1956)
+        err => fetchWeather(34.6901, 135.1956) // fallback: 神戸
       );
     } else {
       fetchWeather(34.6901, 135.1956);
