@@ -5,27 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LIFES</title>
   <style>
-    :root {
-      --bg-color: #ffffff;
-      --card-color: rgba(255, 255, 255, 0.9);
-    }
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
       font-family: sans-serif;
-      background-color: var(--bg-color);
-      background-size: cover;
-      background-repeat: no-repeat;
+      background: linear-gradient(to bottom, #90caf9, #ffffff);
       display: flex;
       flex-direction: column;
     }
 
-    main {
+    #main-content {
       flex: 1;
       overflow-y: auto;
       padding: 20px;
-      padding-bottom: 80px;
+      padding-bottom: 100px;
       box-sizing: border-box;
     }
 
@@ -38,26 +32,46 @@
       justify-content: space-around;
       padding: 10px 0;
       border-top: 1px solid #ccc;
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(10px);
     }
 
     .bottom-nav a {
       text-decoration: none;
       color: #444;
-      font-size: 14px;
+      font-size: 12px;
       text-align: center;
+      flex: 1;
     }
 
     .bottom-nav span {
       display: block;
       font-size: 20px;
     }
+
+    .logo {
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      letter-spacing: 8px;
+      padding: 20px 0;
+    }
+
+    .logo .L { color: #f44336; }
+    .logo .I { color: #ff9800; }
+    .logo .F { color: #ffeb3b; }
+    .logo .E { color: #4caf50; }
+    .logo .S { color: #2196f3; }
   </style>
 </head>
 <body>
+  <div class="logo">
+    <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
+  </div>
+
   <main id="main-content">
-    <!-- 各カテゴリのHTMLを読み込み -->
+    <!-- 初期表示は home.html を読み込む -->
+    読み込み中...
   </main>
 
   <nav class="bottom-nav">
@@ -69,29 +83,14 @@
   </nav>
 
   <script>
-    function loadPage(url) {
-      fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("main-content").innerHTML = html;
-        });
-    }
-
-    function applyStoredStyles() {
-      const bg = localStorage.getItem("lifes_bg_color");
-      const img = localStorage.getItem("lifes_bg_image");
-      const op = localStorage.getItem("lifes_card_opacity");
-
-      if (bg) document.documentElement.style.setProperty("--bg-color", bg);
-      if (img) {
-        document.body.style.backgroundImage = `url('${img}')`;
-      }
-      if (op) document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+    async function loadPage(file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById("main-content").innerHTML = html;
     }
 
     window.onload = () => {
-      applyStoredStyles();
-      loadPage("home.html"); // 初期ページ
+      loadPage("home.html");
     };
   </script>
 </body>
