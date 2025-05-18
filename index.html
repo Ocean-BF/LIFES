@@ -66,7 +66,7 @@
   </div>
 
   <script>
-    const supabase = supabase.createClient(
+    const client = supabase.createClient(
       "https://mzuqsfoqkaopxhyggwyk.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
     );
@@ -74,7 +74,7 @@
     async function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await client.auth.signInWithPassword({ email, password });
       if (error) {
         alert("ログイン失敗: " + error.message);
       } else {
@@ -86,7 +86,7 @@
     async function signup() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await client.auth.signUp({ email, password });
       if (error) {
         alert("登録失敗: " + error.message);
       } else {
@@ -94,8 +94,7 @@
       }
     }
 
-    // 既にログイン済みなら自動で遷移
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    client.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         localStorage.setItem("lifes_login", "true");
         location.href = "top.html";
