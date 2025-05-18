@@ -75,6 +75,13 @@
       font-size: 14px;
       color: #666;
     }
+
+    #weather img {
+      vertical-align: middle;
+      width: 40px;
+      height: 40px;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
@@ -125,9 +132,11 @@
         const res = await fetch(url);
         const data = await res.json();
         const desc = data.weather[0].description;
+        const icon = data.weather[0].icon;
         const temp = data.main.temp.toFixed(1);
         const city = data.name;
-        document.getElementById("weather").textContent = `${city}：${desc}（${temp}℃）`;
+        const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+        document.getElementById("weather").innerHTML = `${city}：${desc}（${temp}℃） <img src="${iconUrl}" alt="${desc}">`;
       } catch (err) {
         document.getElementById("weather").textContent = "天気情報の取得に失敗しました";
       }
@@ -140,12 +149,11 @@
             fetchWeather(pos.coords.latitude, pos.coords.longitude);
           },
           err => {
-            // 失敗したら神戸を表示
-            fetchWeather(34.6901, 135.1956); // 神戸市
+            fetchWeather(34.6901, 135.1956); // 神戸
           }
         );
       } else {
-        fetchWeather(34.6901, 135.1956); // 神戸市
+        fetchWeather(34.6901, 135.1956); // 神戸
       }
     }
 
