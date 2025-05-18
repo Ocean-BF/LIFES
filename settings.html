@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LIFES - 設定</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --card-color: rgba(255, 255, 255, 0.9);
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: var(--bg-color);
+      padding: 20px;
+    }
+    .panel {
+      background-color: var(--card-color);
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    input[type="color"],
+    input[type="range"],
+    input[type="password"],
+    input[type="url"] {
+      width: 100%;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    button.logout {
+      background-color: #f44336;
+    }
+    .email {
+      font-size: 14px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h2>アカウント</h2>
+    <label>ログイン中のメールアドレス:</label>
+    <div class="email" id="user-email">読み込み中...</div>
+    <label for="new-password">新しいパスワード:</label>
+    <input type="password" id="new-password" placeholder="新しいパスワードを入力">
+    <button onclick="changePassword()">パスワードを変更</button>
+  </div>
+
+  <div class="panel">
+    <h2>表示設定</h2>
+    <label for="bg-color">背景色:</label>
+    <input type="color" id="bg-color">
+    <label for="bg-image">背景画像URL:</label>
+    <input type="url" id="bg-image" placeholder="画像URLを入力">
+    <label for="card-color">カードの透明度:</label>
+    <input type="range" id="card-opacity" min="0.5" max="1" step="0.05">
+    <label for="dark-mode">ダークモード:</label>
+    <button onclick="toggleDarkMode()">切り替え</button>
+    <button onclick="resetStyles()">スタイルをリセット</button>
+  </div>
+
+  <div class="panel">
+    <h2>ログアウト</h2>
+    <button class="logout" onclick="logout()">ログアウト</button>
+  </div>
+
+  <script>
+    const client = supabase.createClient(
+      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+    );
+
+    // 初期読み込み
+    client.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        document.getElementById("user-email").textContent = user.email;
+      }
+    });
+
+    // パスワード変更
+    async function changePassword() {
+      const pw = document.getElementById("new-password").value;
+      if (pw.length < 6) {
+        alert("6文字以上のパスワードを入力してください。");
+        return;
+      }
+      const { error } = await client.auth.updateUser({ password: pw });
+      if (error) alert("変更失敗: " + error.message);
+      else alert("パスワードを変更しました。");
+    }
+
+    // 背景・カード設定
+    const bgInput = document.getElementById("bg-color");
+    const bgImg = document.getElementById("bg-image");
+    const opacity = document.getElementById("card-opacity");
+
+    bgInput.oninput = () => {
+      document.documentElement.style.setProperty("--bg-color", bgInput.value);
+      localStorage.setItem("lifes_bg_color", bgInput.value);
+    };
+
+    bgImg.onchange = () => {
+      document.body.style.backgroundImage = `url('${bgImg.value}')`;
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundRepeat = "no-repeat";
+      localStorage.setItem("lifes_bg_image", bgImg.value);
+    };
+
+    opacity.oninput = () => {
+      const val = opacity.value;
+      document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${val})`);
+      localStorage.setItem("lifes_card_opacity", val);
+    };
+
+    function toggleDarkMode() {
+      const dark = document.body.classList.toggle("dark");
+      if (dark) {
+        document.documentElement.style.setProperty("--bg-color", "#222");
+        document.documentElement.style.setProperty("--card-color", "rgba(40,40,40,0.9)");
+        localStorage.setItem("lifes_dark", "on");
+      } else {
+        localStorage.removeItem("lifes_dark");
+      }
+    }
+
+    function resetStyles() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    async function logout() {
+      await client.auth.signOut();
+      localStorage.clear();
+      location.href = "index.html";
+    }
+
+    // 反映
+    window.onload = () => {
+      const bg = localStorage.getItem("lifes_bg_color");
+      const img = localStorage.getItem("lifes_bg_image");
+      const op = localStorage.getItem("lifes_card_opacity");
+      const dark = localStorage.getItem("lifes_dark");
+
+      if (bg) document.documentElement.style.setProperty("--bg-color", bg);
+      if (img) {
+        document.body.style.backgroundImage = `url('${img}')`;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundRepeat = "no-repeat";
+      }
+      if (op) document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+      if (dark === "on") {
+        document.body.classList.add("dark");
+        document.documentElement.style.setProperty("--bg-color", "#222");
+        document.documentElement.style.setProperty("--card-color", "rgba(40,40,40,0.9)");
+      }
+    };
+  </script>
+</body>
+</html>
