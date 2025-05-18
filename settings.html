@@ -1,53 +1,4 @@
-<style>
-  .panel {
-    background-color: rgba(255, 255, 255, 0.85);
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-size: 16px;
-  }
-  label {
-    display: block;
-    margin-top: 12px;
-  }
-  input, button {
-    font-size: 16px;
-    padding: 10px;
-    width: 100%;
-    margin-top: 5px;
-    box-sizing: border-box;
-  }
-  button.logout {
-    background-color: #f44336;
-    color: white;
-  }
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    border-top: 1px solid #ccc;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-  }
-  .bottom-nav a {
-    text-decoration: none;
-    color: #444;
-    font-size: 12px;
-    text-align: center;
-    flex: 1;
-  }
-  .bottom-nav span {
-    display: block;
-    font-size: 20px;
-  }
-</style>
-
-<div class="panel">
+<div class="card">
   <h2>アカウント</h2>
   <label>ログイン中のメールアドレス:</label>
   <div id="user-email">読み込み中...</div>
@@ -56,7 +7,7 @@
   <button onclick="changePassword()">パスワードを変更</button>
 </div>
 
-<div class="panel">
+<div class="card">
   <h2>表示設定</h2>
   <label for="bg-color">背景色:</label>
   <input type="color" id="bg-color">
@@ -67,18 +18,10 @@
   <button onclick="resetStyles()">スタイルをリセット</button>
 </div>
 
-<div class="panel">
+<div class="card">
   <h2>ログアウト</h2>
-  <button class="logout" onclick="logout()">ログアウト</button>
+  <button onclick="logout()" style="background:#f44336; color:white;">ログアウト</button>
 </div>
-
-<nav class="bottom-nav">
-  <a href="#" onclick="loadPage('home.html')"><span>🏠</span>ホーム</a>
-  <a href="#" onclick="loadPage('life.html')"><span>🛍️</span>生活</a>
-  <a href="#" onclick="loadPage('edu.html')"><span>📘</span>教育</a>
-  <a href="#" onclick="loadPage('health.html')"><span>💊</span>健康</a>
-  <a href="#" onclick="loadPage('settings.html')"><span>⚙️</span>設定</a>
-</nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -110,6 +53,8 @@
   bgInput.oninput = () => {
     document.documentElement.style.setProperty("--bg-color", bgInput.value);
     localStorage.setItem("lifes_bg_color", bgInput.value);
+    document.body.style.backgroundImage = "none";
+    localStorage.removeItem("lifes_bg_image");
   };
 
   fileInput.onchange = () => {
@@ -140,7 +85,7 @@
     location.href = "index.html";
   }
 
-  // 初期反映
+  // 初期スタイル反映
   window.onload = () => {
     const bg = localStorage.getItem("lifes_bg_color");
     const img = localStorage.getItem("lifes_bg_image");
