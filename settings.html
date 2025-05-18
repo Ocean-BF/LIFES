@@ -84,95 +84,95 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  window.onload = () => {
-    const client = supabase.createClient(
-      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
-    );
+(function () {
+  const client = supabase.createClient(
+    "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+  );
 
-    // メールアドレス取得
-    client.auth.getUser().then(({ data: { user }, error }) => {
-      document.getElementById("user-email").textContent = user?.email || "取得できませんでした";
-    });
+  // メールアドレス取得
+  client.auth.getUser().then(({ data: { user }, error }) => {
+    document.getElementById("user-email").textContent = user?.email || "取得できませんでした";
+  });
 
-    // 背景色変更
-    const bgColorInput = document.getElementById("bg-color");
-    bgColorInput.oninput = () => {
-      document.documentElement.style.setProperty("--bg-color", bgColorInput.value);
-      localStorage.setItem("lifes_bg_color", bgColorInput.value);
-    };
+  // 背景色変更
+  const bgColorInput = document.getElementById("bg-color");
+  bgColorInput.oninput = () => {
+    document.documentElement.style.setProperty("--bg-color", bgColorInput.value);
+    localStorage.setItem("lifes_bg_color", bgColorInput.value);
+  };
 
-    // 背景画像変更
-    const bgFileInput = document.getElementById("bg-file");
-    bgFileInput.onchange = () => {
-      const file = bgFileInput.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const url = e.target.result;
-        document.body.style.backgroundImage = `url('${url}')`;
-        document.body.style.backgroundSize = "cover";
-        document.body.style.backgroundRepeat = "no-repeat";
-        localStorage.setItem("lifes_bg_image", url);
-      };
-      reader.readAsDataURL(file);
-    };
-
-    // 透明度
-    const cardOpacityInput = document.getElementById("card-opacity");
-    cardOpacityInput.oninput = () => {
-      const val = cardOpacityInput.value;
-      document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${val})`);
-      localStorage.setItem("lifes_card_opacity", val);
-    };
-
-    // 初期値の反映
-    const bg = localStorage.getItem("lifes_bg_color");
-    const img = localStorage.getItem("lifes_bg_image");
-    const op = localStorage.getItem("lifes_card_opacity");
-    if (bg) {
-      document.documentElement.style.setProperty("--bg-color", bg);
-      bgColorInput.value = bg;
-    }
-    if (img) {
-      document.body.style.backgroundImage = `url('${img}')`;
+  // 背景画像変更
+  const bgFileInput = document.getElementById("bg-file");
+  bgFileInput.onchange = () => {
+    const file = bgFileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target.result;
+      document.body.style.backgroundImage = `url('${url}')`;
       document.body.style.backgroundSize = "cover";
       document.body.style.backgroundRepeat = "no-repeat";
-    }
-    if (op) {
-      document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
-      cardOpacityInput.value = op;
-    }
-
-    // パスワード変更
-    window.changePassword = async () => {
-      const pw = document.getElementById("new-password").value;
-      if (pw.length < 6) {
-        alert("6文字以上で入力してください。");
-        return;
-      }
-      const { error } = await client.auth.updateUser({ password: pw });
-      if (error) alert("変更失敗：" + error.message);
-      else alert("パスワードを変更しました。");
+      localStorage.setItem("lifes_bg_image", url);
     };
-
-    // スタイルリセット
-    window.resetStyles = () => {
-      localStorage.removeItem("lifes_bg_color");
-      localStorage.removeItem("lifes_bg_image");
-      localStorage.removeItem("lifes_card_opacity");
-      document.documentElement.style.setProperty("--bg-color", "#f0f4f8");
-      document.documentElement.style.setProperty("--card-color", "rgba(255,255,255,0.9)");
-      document.body.style.backgroundImage = "";
-      document.getElementById("bg-color").value = "#f0f4f8";
-      document.getElementById("card-opacity").value = "0.9";
-    };
-
-    // ログアウト
-    window.logout = async () => {
-      await client.auth.signOut();
-      localStorage.clear();
-      location.href = "index.html";
-    };
+    reader.readAsDataURL(file);
   };
+
+  // 透明度
+  const cardOpacityInput = document.getElementById("card-opacity");
+  cardOpacityInput.oninput = () => {
+    const val = cardOpacityInput.value;
+    document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${val})`);
+    localStorage.setItem("lifes_card_opacity", val);
+  };
+
+  // 初期値の反映
+  const bg = localStorage.getItem("lifes_bg_color");
+  const img = localStorage.getItem("lifes_bg_image");
+  const op = localStorage.getItem("lifes_card_opacity");
+  if (bg) {
+    document.documentElement.style.setProperty("--bg-color", bg);
+    bgColorInput.value = bg;
+  }
+  if (img) {
+    document.body.style.backgroundImage = `url('${img}')`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundRepeat = "no-repeat";
+  }
+  if (op) {
+    document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+    cardOpacityInput.value = op;
+  }
+
+  // パスワード変更
+  window.changePassword = async () => {
+    const pw = document.getElementById("new-password").value;
+    if (pw.length < 6) {
+      alert("6文字以上で入力してください。");
+      return;
+    }
+    const { error } = await client.auth.updateUser({ password: pw });
+    if (error) alert("変更失敗：" + error.message);
+    else alert("パスワードを変更しました。");
+  };
+
+  // スタイルリセット
+  window.resetStyles = () => {
+    localStorage.removeItem("lifes_bg_color");
+    localStorage.removeItem("lifes_bg_image");
+    localStorage.removeItem("lifes_card_opacity");
+    document.documentElement.style.setProperty("--bg-color", "#f0f4f8");
+    document.documentElement.style.setProperty("--card-color", "rgba(255,255,255,0.9)");
+    document.body.style.backgroundImage = "";
+    document.getElementById("bg-color").value = "#f0f4f8";
+    document.getElementById("card-opacity").value = "0.9";
+  };
+
+  // ログアウト
+  window.logout = async () => {
+    await client.auth.signOut();
+    localStorage.clear();
+    location.href = "index.html";
+  };
+})();
 </script>
