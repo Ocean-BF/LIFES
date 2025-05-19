@@ -1,12 +1,96 @@
-<div id="admin-link" style="display: none; margin-bottom: 20px; text-align: center;">
+<div class="panel">
+  <h2 class="panel-title">アカウント</h2>
+  <div id="user-email" class="text">取得中...</div>
+  <label for="new-password">新しいパスワード:</label>
+  <input type="password" id="new-password" placeholder="6文字以上で入力">
+  <button onclick="changePassword()">パスワードを変更</button>
+</div>
+
+<div id="admin-link-panel" class="panel" style="display: none; text-align: center;">
   <a href="admin.html" style="color: #4caf50; text-decoration: underline; font-weight: bold;">管理パネルへ</a>
 </div>
 
+<div class="panel">
+  <h2 class="panel-title">表示設定</h2>
+  <label for="bg-color">背景色を選択:</label>
+  <input type="color" id="bg-color" value="#f0f4f8" style="height: 40px; padding: 0; border: none;">
+
+  <label for="bg-file">背景画像を選択:</label>
+  <input type="file" id="bg-file" accept="image/*">
+
+  <label for="card-opacity">カードの透明度:</label>
+  <input type="range" id="card-opacity" min="0.5" max="1" step="0.05" value="0.9">
+
+  <button onclick="resetStyles()" class="outline">スタイルをリセット</button>
+</div>
+
+<div class="panel">
+  <h2 class="panel-title">ログアウト</h2>
+  <button class="logout" onclick="logout()">ログアウト</button>
+</div>
+
+<style>
+  .panel {
+    background-color: var(--card-color, rgba(255,255,255,0.9));
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .panel-title {
+    font-size: 16px;
+    margin-top: 0;
+  }
+  label {
+    display: block;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  input[type="color"],
+  input[type="range"],
+  input[type="password"],
+  input[type="file"] {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  .text {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  button {
+    margin-top: 16px;
+    padding: 12px 16px;
+    font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #43a047;
+  }
+  button.outline {
+    background-color: #ffffff;
+    color: #4caf50;
+    border: 2px solid #4caf50;
+  }
+  button.logout {
+    background-color: #f44336;
+  }
+</style>
+
 <script>
-(async function () {
+setTimeout(async () => {
   const client = window.supabaseClient;
 
-  // セッション確認＆再接続
+  // セッションチェック＆再接続
   const { data: sessionData } = await client.auth.getSession();
   if (!sessionData.session) {
     const { data: refreshed, error: refreshError } = await client.auth.refreshSession();
@@ -17,13 +101,14 @@
     }
   }
 
-  // ユーザー情報取得 + 管理者チェック
+  // ユーザー情報取得＆メール表示
   const { data: { user } } = await client.auth.getUser();
   document.getElementById("user-email").textContent = user?.email || "取得できませんでした";
 
+  // 管理者判定
   const { data: adminData } = await client.from("profiles").select("is_admin").eq("id", user.id).single();
-  if (adminData?.is_admin === true) {
-    document.getElementById("admin-link").style.display = "block";
+  if (adminData?.is_admin) {
+    document.getElementById("admin-link-panel").style.display = "block";
   }
 
   const bgColorInput = document.getElementById("bg-color");
@@ -98,5 +183,5 @@
     localStorage.clear();
     location.href = "index.html";
   };
-})();
+}, 0);
 </script>
