@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>管理者パネル - 追加ボタン＋インライン編集</title>
+  <title>管理者パネル - 保存ボタン付き追加行</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; font-size: 14px; }
@@ -15,12 +15,13 @@
     th, td { border-bottom: 1px solid #ddd; padding: 6px; text-align: left; white-space: nowrap; }
     th { background-color: #f0f0f0; }
     input.edit-input { font-size: 14px; width: 100%; padding: 2px; }
-    button { font-size: 12px; padding: 6px 10px; margin: 8px 0; border-radius: 4px; border: none; cursor: pointer; }
+    button { font-size: 12px; padding: 6px 10px; margin: 4px 2px; border-radius: 4px; border: none; cursor: pointer; }
     button.toggle.on { background: #4caf50; color: white; }
     button.toggle.off { background: #ccc; color: #444; }
     button.delete { background: #f44336; color: white; }
     button.updown { background: #2196f3; color: white; }
     #add-app-btn { background: #4caf50; color: white; }
+    button.save { background: #009688; color: white; }
   </style>
 </head>
 <body>
@@ -68,7 +69,7 @@
     function buildRow(app, isNew = false) {
       const tr = document.createElement("tr");
 
-      function editableCell(field, value, id = null) {
+      function editableCell(field, value, refObj) {
         const td = document.createElement("td");
         td.textContent = value || "";
         td.onclick = () => {
@@ -79,18 +80,10 @@
           td.appendChild(input);
           input.focus();
 
-          input.onblur = async () => {
+          input.onblur = () => {
             const newValue = input.value.trim();
-            if (newValue === value) return td.textContent = value;
-
-            if (id) {
-              await client.from("life-apps").update({ [field]: newValue }).eq("id", id);
-              loadApps();
-            } else {
-              newAppData[field] = newValue;
-              td.textContent = newValue;
-              checkAndInsertNewApp(tr);
-            }
+            td.textContent = newValue;
+            if (refObj) refObj[field] = field === "order" ? parseInt(newValue) : newValue;
           };
 
           input.onkeydown = e => {
@@ -101,29 +94,50 @@
         return td;
       }
 
-      const newAppData = { icon: "", title: "", category: "", path: "", order: null, is_public: false };
+      if (isNew) {
+        const newApp = { icon: "", title: "", category: "", path: "", order: null };
+        tr.appendChild(editableCell("icon", "", newApp));
+        tr.appendChild(editableCell("title", "", newApp));
+        tr.appendChild(editableCell("category", "", newApp));
+        tr.appendChild(editableCell("path", "", newApp));
+        tr.appendChild(document.createElement("td"));
+        tr.appendChild(editableCell("order", "", newApp));
 
-      tr.appendChild(editableCell("icon", app?.icon, app?.id));
-      tr.appendChild(editableCell("title", app?.title, app?.id));
-      tr.appendChild(editableCell("category", app?.category, app?.id));
-      tr.appendChild(editableCell("path", app?.path, app?.id));
+        const actionTd = document.createElement("td");
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "保存";
+        saveBtn.className = "save";
+        saveBtn.onclick = async () => {
+          if (!newApp.title || !newApp.category || !newApp.path || isNaN(newApp.order)) {
+            alert("すべての項目を入力してください");
+            return;
+          }
+          newApp.is_public = false;
+          await client.from("life-apps").insert([newApp]);
+          loadApps();
+        };
+        actionTd.appendChild(saveBtn);
+        tr.appendChild(actionTd);
+      } else {
+        function editable(id, field, value) {
+          return editableCell(field, value, { [field]: value, id });
+        }
+        tr.appendChild(editable(app.id, "icon", app.icon));
+        tr.appendChild(editable(app.id, "title", app.title));
+        tr.appendChild(editable(app.id, "category", app.category));
+        tr.appendChild(editable(app.id, "path", app.path));
 
-      const tdToggle = document.createElement("td");
-      if (app?.id) {
+        const tdToggle = document.createElement("td");
         const toggleBtn = document.createElement("button");
         toggleBtn.textContent = app.is_public ? "公開中" : "非公開";
         toggleBtn.className = "toggle " + (app.is_public ? "on" : "off");
         toggleBtn.onclick = () => toggleVisibility(app.id, !app.is_public);
         tdToggle.appendChild(toggleBtn);
-      } else {
-        tdToggle.textContent = "非公開";
-      }
-      tr.appendChild(tdToggle);
+        tr.appendChild(tdToggle);
 
-      tr.appendChild(editableCell("order", app?.order, app?.id));
+        tr.appendChild(editable(app.id, "order", app.order));
 
-      const tdActions = document.createElement("td");
-      if (app?.id) {
+        const tdActions = document.createElement("td");
         const upBtn = document.createElement("button");
         upBtn.textContent = "↑";
         upBtn.className = "updown";
@@ -137,32 +151,15 @@
         deleteBtn.className = "delete";
         deleteBtn.onclick = () => deleteApp(app.id);
         tdActions.append(upBtn, downBtn, deleteBtn);
+        tr.appendChild(tdActions);
       }
-      tr.appendChild(tdActions);
-      if (isNew) tr.dataset.newApp = "true";
+
       return tr;
     }
 
     function insertBlankRow() {
       const tr = buildRow(null, true);
       document.getElementById("app-table-body").appendChild(tr);
-    }
-
-    async function checkAndInsertNewApp(tr) {
-      const tds = tr.querySelectorAll("td");
-      const fields = ["icon", "title", "category", "path", "order"];
-      const newApp = {};
-      let filled = 0;
-      for (let i = 0; i < fields.length; i++) {
-        const text = tds[i].textContent.trim();
-        if (text) filled++;
-        newApp[fields[i]] = fields[i] === "order" ? parseInt(text) : text;
-      }
-      if (filled >= 4 && !isNaN(newApp.order)) {
-        newApp.is_public = false;
-        await client.from("life-apps").insert([newApp]);
-        loadApps();
-      }
     }
 
     async function toggleVisibility(id, newValue) {
