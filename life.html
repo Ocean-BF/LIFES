@@ -8,26 +8,44 @@
     margin-bottom: 10px;
     text-align: center;
   }
+
+  #app-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    padding: 10px;
+  }
+
   .app-card {
     background-color: var(--card-color, rgba(255,255,255,0.9));
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
+    border-radius: 16px;
+    padding: 12px;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     cursor: pointer;
     transition: transform 0.2s;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
+
   .app-card:hover {
     transform: scale(1.03);
   }
+
   .app-icon {
-    font-size: 32px;
+    font-size: 36px;
+    margin-bottom: 6px;
   }
+
   .app-title {
-    margin-top: 8px;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>
 
@@ -68,4 +86,3 @@
   });
 })();
 </script>
-
