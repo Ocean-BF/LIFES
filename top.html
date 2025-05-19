@@ -77,43 +77,44 @@
   <nav class="bottom-nav">
     <a href="#" onclick="loadPage('home.html')"><span>🏠</span>ホーム</a>
     <a href="#" onclick="loadPage('life.html')"><span>🛍️</span>生活</a>
-    <a href="#" onclick="loadPage('edu.html')"><span>📚</span>教育</a>
+    <a href="#" onclick="loadPage('edu.html')"><span>📘</span>教育</a>
     <a href="#" onclick="loadPage('health.html')"><span>💊</span>健康</a>
     <a href="#" onclick="loadPage('settings.html')"><span>⚙️</span>設定</a>
   </nav>
 
   <script>
     async function loadPage(file) {
-      const res = await fetch(file);
-      const htmlText = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlText, 'text/html');
+      try {
+        const res = await fetch(file);
+        const htmlText = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
 
-      const main = document.getElementById("main-content");
-      main.innerHTML = "";
-      for (const node of doc.body.childNodes) {
-        main.appendChild(node.cloneNode(true));
-      }
-
-      const scripts = doc.querySelectorAll("script");
-      scripts.forEach(oldScript => {
-        const newScript = document.createElement("script");
-        if (oldScript.src) {
-          newScript.src = oldScript.src;
-        } else {
-          newScript.textContent = oldScript.textContent;
+        const main = document.getElementById("main-content");
+        main.innerHTML = "";
+        for (const node of doc.body.childNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
+            main.appendChild(node.cloneNode(true));
+          }
         }
-        document.body.appendChild(newScript);
-      });
+
+        const scripts = doc.querySelectorAll("script");
+        scripts.forEach(oldScript => {
+          const newScript = document.createElement("script");
+          if (oldScript.src) {
+            newScript.src = oldScript.src;
+          } else {
+            newScript.textContent = oldScript.textContent;
+          }
+          document.body.appendChild(newScript);
+        });
+      } catch (e) {
+        console.error("ページ読み込みエラー:", e);
+        document.getElementById("main-content").textContent = "ページの読み込みに失敗しました。";
+      }
     }
 
-    window.onload = async () => {
-      const session = (await window.supabaseClient.auth.getSession()).data.session;
-      if (!session) {
-        window.location.href = 'index.html';
-        return;
-      }
-
+    window.onload = () => {
       const bg = localStorage.getItem("lifes_bg_color");
       const img = localStorage.getItem("lifes_bg_image");
       const op = localStorage.getItem("lifes_card_opacity");
