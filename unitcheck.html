@@ -1,0 +1,90 @@
+<h2>底値チェッカー</h2>
+<form id="price-form">
+<label>商品名</label>
+<input id="item-name" required="" type="text"/>
+<label>バーコード（任意）</label>
+<input id="barcode" type="text"/>
+<label>価格（合計）</label>
+<input id="price" required="" type="number"/>
+<label>数量</label>
+<input id="quantity" required="" type="number" value="1"/>
+<label>内容量</label>
+<input id="volume" required="" type="number"/>
+<label>単位（ml, g, 枚など）</label>
+<input id="unit" required="" type="text"/>
+<button type="submit">登録する</button>
+</form>
+<div id="history"></div>
+<script>
+    const form = document.getElementById("price-form");
+    const historyDiv = document.getElementById("history");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const itemName = document.getElementById("item-name").value.trim();
+      const barcode = document.getElementById("barcode").value.trim();
+      const price = parseFloat(document.getElementById("price").value);
+      const quantity = parseFloat(document.getElementById("quantity").value);
+      const volume = parseFloat(document.getElementById("volume").value);
+      const unit = document.getElementById("unit").value.trim();
+
+      if (!itemName || !unit || isNaN(price) || isNaN(quantity) || isNaN(volume)) {
+        alert("すべての項目を正しく入力してください");
+        return;
+      }
+
+      const unitPrice = price / quantity / volume;
+
+      const { data: userData } = await window.supabaseClient.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) {
+        alert("ログイン情報が確認できません");
+        return;
+      }
+
+      const { error } = await window.supabaseClient.from("unit_prices").insert([{
+        user_id: userId,
+        item_name: itemName,
+        barcode,
+        price,
+        quantity,
+        volume,
+        unit,
+        unit_price: unitPrice
+      }]);
+
+      if (error) {
+        alert("登録に失敗しました：" + error.message);
+        return;
+      }
+
+      form.reset();
+      loadHistory(itemName);
+    });
+
+    async function loadHistory(itemName) {
+      historyDiv.innerHTML = "<h3>履歴</h3>";
+
+      const { data, error } = await window.supabaseClient
+        .from("unit_prices")
+        .select("*")
+        .eq("item_name", itemName)
+        .order("unit_price", { ascending: true })
+        .limit(3);
+
+      if (error || !data || data.length === 0) {
+        historyDiv.innerHTML += "<p>一致する履歴がありません</p>";
+        return;
+      }
+
+      data.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "record";
+        div.innerHTML = `
+          <div class="record-header">${r.item_name} - ${r.unit_price.toFixed(4)}円/${r.unit}</div>
+          <small>価格: ${r.price}円 / 数量: ${r.quantity} / 内容量: ${r.volume}${r.unit}</small>
+        `;
+        historyDiv.appendChild(div);
+      });
+    }
+  </script>
