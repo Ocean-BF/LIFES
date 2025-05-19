@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>管理者パネル - 並び順付き</title>
+  <title>管理者パネル - 並び順＋追加</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
@@ -18,18 +18,37 @@
     button.toggle.off { background: #ccc; color: #444; }
     button.delete { background: #f44336; color: white; }
     button.updown { background: #2196f3; color: white; }
+    form#add-form {
+      background: white;
+      padding: 12px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    form#add-form input {
+      margin-right: 10px;
+      margin-bottom: 8px;
+      padding: 6px;
+    }
   </style>
 </head>
 <body>
-  <header>管理者パネル - アプリ管理（並び順対応）</header>
+  <header>管理者パネル</header>
   <main>
     <div id="admin-panel" class="hidden">
+      <form id="add-form">
+        <input id="icon" placeholder="アイコン">
+        <input id="title" placeholder="タイトル">
+        <input id="category" placeholder="カテゴリ">
+        <input id="path" placeholder="パス">
+        <input id="order" type="number" placeholder="順番">
+        <button type="submit">追加</button>
+      </form>
+
       <table>
         <thead>
-          <tr>
-            <th>アイコン</th><th>タイトル</th><th>カテゴリ</th><th>パス</th>
-            <th>公開</th><th>順番</th><th>操作</th>
-          </tr>
+          <tr><th>アイコン</th><th>タイトル</th><th>カテゴリ</th><th>パス</th>
+              <th>公開</th><th>順番</th><th>操作</th></tr>
         </thead>
         <tbody id="app-table-body"><tr><td colspan="7">読み込み中...</td></tr></tbody>
       </table>
@@ -84,14 +103,8 @@
         downBtn.onclick = () => moveOrder(app.id, 1);
 
         tr.innerHTML = `
-          <td>${app.icon || "📦"}</td>
-          <td>${app.title}</td>
-          <td>${app.category}</td>
-          <td>${app.path}</td>
-          <td></td>
-          <td>${app.order ?? ""}</td>
-          <td></td>
-        `;
+          <td>${app.icon || "📦"}</td><td>${app.title}</td><td>${app.category}</td>
+          <td>${app.path}</td><td></td><td>${app.order ?? ""}</td><td></td>`;
         tr.children[4].appendChild(toggleBtn);
         tr.children[6].appendChild(upBtn);
         tr.children[6].appendChild(downBtn);
@@ -117,15 +130,28 @@
       const index = data.findIndex(app => app.id === id);
       const swapIndex = index + direction;
       if (swapIndex < 0 || swapIndex >= data.length) return;
+      const current = data[index], target = data[swapIndex];
 
-      const currentApp = data[index];
-      const targetApp = data[swapIndex];
-
-      await client.from("life-apps").update({ order: targetApp.order }).eq("id", currentApp.id);
-      await client.from("life-apps").update({ order: currentApp.order }).eq("id", targetApp.id);
-
+      await client.from("life-apps").update({ order: target.order }).eq("id", current.id);
+      await client.from("life-apps").update({ order: current.order }).eq("id", target.id);
       loadApps();
     }
+
+    document.getElementById("add-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const icon = document.getElementById("icon").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const category = document.getElementById("category").value.trim();
+      const path = document.getElementById("path").value.trim();
+      const order = parseInt(document.getElementById("order").value.trim());
+      if (!title || !category || !path || isNaN(order)) {
+        alert("すべての項目を正しく入力してください");
+        return;
+      }
+      await client.from("life-apps").insert([{ icon, title, category, path, is_public: false, order }]);
+      e.target.reset();
+      loadApps();
+    };
   </script>
 </body>
 </html>
