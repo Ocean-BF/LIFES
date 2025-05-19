@@ -1,37 +1,58 @@
-<form id="unit-form">
-  <div class="form-group">
-    <label>商品名</label>
-    <input type="text" name="name" required>
-  </div>
-  <div class="form-group">
-    <label>バーコード（任意）</label>
-    <input type="text" name="barcode">
-  </div>
-  <div class="form-group">
-    <label>価格（合計）</label>
-    <input type="number" name="price" step="0.01" required>
-  </div>
-  <div class="form-group">
-    <label>数量</label>
-    <input type="number" name="quantity" value="1" required>
-  </div>
-  <div class="form-group">
-    <label>内容量</label>
-    <input type="number" name="amount" step="0.01" required>
-  </div>
-  <div class="form-group">
-    <label>単位（mL, g, 枚など）</label>
-    <input type="text" name="unit" required>
-  </div>
-  <div class="form-group">
-    <button type="submit">登録する</button>
-  </div>
-</form>
+
+<div class="unitcheck-container">
+  <form id="unit-form">
+    <div class="form-group">
+      <label>商品名</label>
+      <input type="text" name="item_name" id="item_name" required list="itemList">
+      <datalist id="itemList"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label>カテゴリ</label>
+      <input type="text" name="category" id="category" required list="categoryList">
+      <datalist id="categoryList"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label>価格（合計）</label>
+      <input type="number" name="price" id="price" step="0.01" required>
+    </div>
+
+    <div class="form-group">
+      <label>数量</label>
+      <input type="number" name="quantity" id="quantity" value="1" min="1" required>
+    </div>
+
+    <div class="form-group">
+      <label>内容量</label>
+      <input type="number" name="amount" id="amount" step="0.01" required>
+    </div>
+
+    <div class="form-group">
+      <label>店名</label>
+      <input type="text" name="shop_name" id="shop_name">
+    </div>
+
+    <div class="form-group">
+      <label>単価（自動計算）</label>
+      <input type="text" id="unit_price" disabled>
+    </div>
+
+    <div class="form-group">
+      <button type="submit">登録する</button>
+    </div>
+  </form>
+  <div id="status"></div>
+</div>
 
 <style>
-  form {
-    max-width: 400px;
+  .unitcheck-container {
+    max-width: 480px;
     margin: auto;
+    padding: 20px;
+  }
+
+  form {
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -68,4 +89,64 @@
   button:hover {
     background-color: #0051b4;
   }
+
+  #status {
+    margin-top: 10px;
+    text-align: center;
+  }
 </style>
+
+<script>
+(async () => {
+  const form = document.getElementById("unit-form");
+  const price = document.getElementById("price");
+  const quantity = document.getElementById("quantity");
+  const amount = document.getElementById("amount");
+  const unit_price = document.getElementById("unit_price");
+  const statusEl = document.getElementById("status");
+
+  function updateUnitPrice() {
+    const p = parseFloat(price.value);
+    const q = parseFloat(quantity.value);
+    const a = parseFloat(amount.value);
+    if (p && q && a && q * a > 0) {
+      unit_price.value = (p / (q * a)).toFixed(2);
+    } else {
+      unit_price.value = "";
+    }
+  }
+
+  [price, quantity, amount].forEach(input => {
+    input.addEventListener("input", updateUnitPrice);
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const item_name = form.item_name.value.trim();
+    const category = form.category.value.trim();
+    const shop_name = form.shop_name.value.trim();
+    const priceVal = parseFloat(price.value);
+    const quantityVal = parseInt(quantity.value);
+    const amountVal = parseFloat(amount.value);
+    const unitPriceVal = parseFloat(unit_price.value);
+
+    const { data, error } = await window.supabaseClient.from("unit_prices").insert([{
+      item_name, category, shop_name,
+      price: priceVal,
+      quantity: quantityVal,
+      amount: amountVal,
+      unit_price: unitPriceVal,
+      user_id: (await window.supabaseClient.auth.getUser()).data.user.id
+    }]);
+
+    if (error) {
+      statusEl.textContent = "登録に失敗しました。";
+    } else {
+      statusEl.textContent = "登録しました！";
+      form.reset();
+      unit_price.value = "";
+    }
+  });
+
+})();
+</script>
