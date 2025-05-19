@@ -52,12 +52,30 @@
   const listEl = document.getElementById("app-list");
   listEl.innerHTML = "読み込み中...";
 
-  const data, error = await window.supabaseClient
+  const { data: userData } = await window.supabaseClient.auth.getUser();
+  const uid = userData?.user?.id;
+
+  let isAdmin = false;
+
+  if (uid) {
+    const { data: profile } = await window.supabaseClient
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", uid)
+      .single();
+    isAdmin = profile?.is_admin === true;
+  }
+
+  let query = window.supabaseClient
     .from("life-apps")
     .select("title, path, icon")
-    .eq("category", "edu")
-    .eq("is_public", true)
-    .order("order", { ascending: true });
+    .eq("category", "edu");
+
+  if (!isAdmin) {
+    query = query.eq("is_public", true);
+  }
+
+  const { data, error } = await query.order("order", { ascending: true });
 
   if (error) {
     listEl.innerHTML = "アプリ一覧の取得に失敗しました。";
@@ -84,4 +102,3 @@
   });
 })();
 </script>
-
