@@ -25,6 +25,21 @@
     .hidden {
       display: none;
     }
+    .app-card {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .app-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .app-meta {
+      font-size: 14px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -35,7 +50,7 @@
     </div>
     <div id="admin-panel" class="hidden">
       <p>管理者として認証されました。</p>
-      <!-- アプリ一覧などのUIはここに追加していきます -->
+      <div id="app-list">読み込み中...</div>
     </div>
   </main>
 
@@ -66,6 +81,38 @@
       }
 
       document.getElementById("admin-panel").classList.remove("hidden");
+      loadApps();
+    }
+
+    async function loadApps() {
+      const listEl = document.getElementById("app-list");
+      listEl.innerHTML = "読み込み中...";
+
+      const { data, error } = await client
+        .from("life-apps")
+        .select("id, title, path, icon, is_public, order")
+        .order("order", { ascending: true });
+
+      if (error) {
+        listEl.innerHTML = "アプリ一覧の取得に失敗しました。";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        listEl.innerHTML = "登録されているアプリはありません。";
+        return;
+      }
+
+      listEl.innerHTML = "";
+      data.forEach(app => {
+        const div = document.createElement("div");
+        div.className = "app-card";
+        div.innerHTML = `
+          <div class="app-title">${app.icon || "📦"} ${app.title}</div>
+          <div class="app-meta">パス: ${app.path}｜公開: ${app.is_public ? "✅" : "❌"}</div>
+        `;
+        listEl.appendChild(div);
+      });
     }
 
     window.onload = checkAdmin;
