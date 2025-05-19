@@ -1,126 +1,37 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>アプリ管理 - 管理者専用</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>管理者パネル - 並び順付き</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #4caf50;
-      color: white;
-      padding: 16px;
-      text-align: center;
-      font-size: 20px;
-    }
-    main {
-      padding: 20px;
-    }
-    .hidden {
-      display: none;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th, td {
-      border-bottom: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    button.toggle {
-      font-size: 14px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-    }
-    button.toggle.on {
-      background-color: #4caf50;
-      color: white;
-    }
-    button.toggle.off {
-      background-color: #ccc;
-      color: #444;
-    }
-    button.delete {
-      background-color: #f44336;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    form#add-form {
-      margin-bottom: 20px;
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    form#add-form input {
-      margin-right: 10px;
-      margin-bottom: 8px;
-      padding: 6px;
-    }
-    form#add-form button {
-      padding: 6px 12px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+    header { background: #4caf50; color: white; padding: 16px; text-align: center; font-size: 20px; }
+    main { padding: 20px; }
+    .hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    button { font-size: 12px; padding: 4px 6px; margin-right: 4px; border-radius: 4px; border: none; cursor: pointer; }
+    button.toggle.on { background: #4caf50; color: white; }
+    button.toggle.off { background: #ccc; color: #444; }
+    button.delete { background: #f44336; color: white; }
+    button.updown { background: #2196f3; color: white; }
   </style>
 </head>
 <body>
-  <header>管理者パネル - アプリ管理</header>
+  <header>管理者パネル - アプリ管理（並び順対応）</header>
   <main>
-    <div id="not-admin" class="hidden">
-      <p>管理者のみアクセス可能です。</p>
-    </div>
     <div id="admin-panel" class="hidden">
-      <p>管理者として認証されました。</p>
-
-      <form id="add-form">
-        <input id="icon" placeholder="アイコン (例: 📦)">
-        <input id="title" placeholder="タイトル">
-        <input id="category" placeholder="カテゴリ (例: life)">
-        <input id="path" placeholder="パス (例: unitcheck.html)">
-        <input id="order" type="number" placeholder="順番">
-        <button type="submit">アプリを追加</button>
-      </form>
-
-      <table id="app-table">
+      <table>
         <thead>
           <tr>
-            <th>アイコン</th>
-            <th>タイトル</th>
-            <th>カテゴリ</th>
-            <th>パス</th>
-            <th>公開</th>
-            <th>順番</th>
-            <th>削除</th>
+            <th>アイコン</th><th>タイトル</th><th>カテゴリ</th><th>パス</th>
+            <th>公開</th><th>順番</th><th>操作</th>
           </tr>
         </thead>
-        <tbody id="app-table-body">
-          <tr><td colspan="7">読み込み中...</td></tr>
-        </tbody>
+        <tbody id="app-table-body"><tr><td colspan="7">読み込み中...</td></tr></tbody>
       </table>
     </div>
   </main>
@@ -131,62 +42,46 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
     );
 
-    async function checkAdmin() {
-      const { data: sessionData } = await client.auth.getSession();
-      if (!sessionData.session) {
-        window.location.href = "index.html";
-        return;
-      }
+    window.onload = async () => {
+      const session = (await client.auth.getSession()).data.session;
+      if (!session) return location.href = "index.html";
 
-      const { data: { user } } = await client.auth.getUser();
-      const { data: profile, error } = await client
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-
-      if (error || !profile?.is_admin) {
-        alert("管理者専用ページです。");
-        window.location.href = "top.html";
-        return;
-      }
+      const user = (await client.auth.getUser()).data.user;
+      const admin = await client.from("profiles").select("is_admin").eq("id", user.id).single();
+      if (!admin.data?.is_admin) return alert("管理者のみアクセス可能です。");
 
       document.getElementById("admin-panel").classList.remove("hidden");
       loadApps();
-    }
+    };
 
     async function loadApps() {
       const tbody = document.getElementById("app-table-body");
       tbody.innerHTML = "<tr><td colspan='7'>読み込み中...</td></tr>";
 
-      const { data, error } = await client
-        .from("life-apps")
-        .select("id, title, category, path, icon, is_public, order")
-        .order("order", { ascending: true });
-
-      if (error || !data) {
-        tbody.innerHTML = "<tr><td colspan='7'>取得に失敗しました。</td></tr>";
-        return;
-      }
-
-      if (data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='7'>アプリが登録されていません。</td></tr>";
-        return;
-      }
-
+      const { data } = await client.from("life-apps").select("*").order("order", { ascending: true });
       tbody.innerHTML = "";
+
       data.forEach(app => {
         const tr = document.createElement("tr");
-
         const toggleBtn = document.createElement("button");
-        toggleBtn.className = "toggle " + (app.is_public ? "on" : "off");
         toggleBtn.textContent = app.is_public ? "公開中" : "非公開";
+        toggleBtn.className = "toggle " + (app.is_public ? "on" : "off");
         toggleBtn.onclick = () => toggleVisibility(app.id, !app.is_public);
 
         const deleteBtn = document.createElement("button");
-        deleteBtn.className = "delete";
         deleteBtn.textContent = "削除";
+        deleteBtn.className = "delete";
         deleteBtn.onclick = () => deleteApp(app.id);
+
+        const upBtn = document.createElement("button");
+        upBtn.textContent = "↑";
+        upBtn.className = "updown";
+        upBtn.onclick = () => moveOrder(app.id, -1);
+
+        const downBtn = document.createElement("button");
+        downBtn.textContent = "↓";
+        downBtn.className = "updown";
+        downBtn.onclick = () => moveOrder(app.id, 1);
 
         tr.innerHTML = `
           <td>${app.icon || "📦"}</td>
@@ -198,70 +93,39 @@
           <td></td>
         `;
         tr.children[4].appendChild(toggleBtn);
+        tr.children[6].appendChild(upBtn);
+        tr.children[6].appendChild(downBtn);
         tr.children[6].appendChild(deleteBtn);
         tbody.appendChild(tr);
       });
     }
 
     async function toggleVisibility(id, newValue) {
-      const { error } = await client
-        .from("life-apps")
-        .update({ is_public: newValue })
-        .eq("id", id);
-
-      if (error) {
-        alert("更新に失敗しました。");
-        return;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await loadApps();
+      await client.from("life-apps").update({ is_public: newValue }).eq("id", id);
+      await new Promise(r => setTimeout(r, 300));
+      loadApps();
     }
 
     async function deleteApp(id) {
       if (!confirm("本当に削除しますか？")) return;
-
-      const { error } = await client
-        .from("life-apps")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        alert("削除に失敗しました。");
-        return;
-      }
-
-      await loadApps();
+      await client.from("life-apps").delete().eq("id", id);
+      loadApps();
     }
 
-    document.getElementById("add-form").onsubmit = async (e) => {
-      e.preventDefault();
+    async function moveOrder(id, direction) {
+      const { data } = await client.from("life-apps").select("*").order("order", { ascending: true });
+      const index = data.findIndex(app => app.id === id);
+      const swapIndex = index + direction;
+      if (swapIndex < 0 || swapIndex >= data.length) return;
 
-      const icon = document.getElementById("icon").value.trim();
-      const title = document.getElementById("title").value.trim();
-      const category = document.getElementById("category").value.trim();
-      const path = document.getElementById("path").value.trim();
-      const order = parseInt(document.getElementById("order").value.trim());
+      const currentApp = data[index];
+      const targetApp = data[swapIndex];
 
-      if (!title || !category || !path || isNaN(order)) {
-        alert("全ての必須項目を正しく入力してください。");
-        return;
-      }
+      await client.from("life-apps").update({ order: targetApp.order }).eq("id", currentApp.id);
+      await client.from("life-apps").update({ order: currentApp.order }).eq("id", targetApp.id);
 
-      const { error } = await client
-        .from("life-apps")
-        .insert([{ title, category, path, icon, is_public: false, order }]);
-
-      if (error) {
-        alert("追加に失敗しました。");
-        return;
-      }
-
-      e.target.reset();
-      await loadApps();
-    };
-
-    window.onload = checkAdmin;
+      loadApps();
+    }
   </script>
 </body>
 </html>
