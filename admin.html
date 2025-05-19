@@ -49,7 +49,6 @@
       border-radius: 4px;
       border: none;
       cursor: pointer;
-      background-color: #ddd;
     }
     button.toggle.on {
       background-color: #4caf50;
@@ -58,6 +57,34 @@
     button.toggle.off {
       background-color: #ccc;
       color: #444;
+    }
+    button.delete {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    form#add-form {
+      margin-bottom: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    form#add-form input {
+      margin-right: 10px;
+      margin-bottom: 8px;
+      padding: 6px;
+    }
+    form#add-form button {
+      padding: 6px 12px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -69,6 +96,16 @@
     </div>
     <div id="admin-panel" class="hidden">
       <p>管理者として認証されました。</p>
+
+      <form id="add-form">
+        <input id="icon" placeholder="アイコン (例: 📦)">
+        <input id="title" placeholder="タイトル">
+        <input id="category" placeholder="カテゴリ (例: life)">
+        <input id="path" placeholder="パス (例: unitcheck.html)">
+        <input id="order" type="number" placeholder="順番">
+        <button type="submit">アプリを追加</button>
+      </form>
+
       <table id="app-table">
         <thead>
           <tr>
@@ -78,10 +115,11 @@
             <th>パス</th>
             <th>公開</th>
             <th>順番</th>
+            <th>削除</th>
           </tr>
         </thead>
         <tbody id="app-table-body">
-          <tr><td colspan="6">読み込み中...</td></tr>
+          <tr><td colspan="7">読み込み中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -119,7 +157,7 @@
 
     async function loadApps() {
       const tbody = document.getElementById("app-table-body");
-      tbody.innerHTML = "<tr><td colspan='6'>読み込み中...</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='7'>読み込み中...</td></tr>";
 
       const { data, error } = await client
         .from("life-apps")
@@ -127,22 +165,28 @@
         .order("order", { ascending: true });
 
       if (error || !data) {
-        tbody.innerHTML = "<tr><td colspan='6'>取得に失敗しました。</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='7'>取得に失敗しました。</td></tr>";
         return;
       }
 
       if (data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='6'>アプリが登録されていません。</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='7'>アプリが登録されていません。</td></tr>";
         return;
       }
 
       tbody.innerHTML = "";
       data.forEach(app => {
         const tr = document.createElement("tr");
+
         const toggleBtn = document.createElement("button");
         toggleBtn.className = "toggle " + (app.is_public ? "on" : "off");
         toggleBtn.textContent = app.is_public ? "公開中" : "非公開";
-        toggleBtn.onclick = () => toggleVisibility(app.id, !app.is_public, toggleBtn);
+        toggleBtn.onclick = () => toggleVisibility(app.id, !app.is_public);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete";
+        deleteBtn.textContent = "削除";
+        deleteBtn.onclick = () => deleteApp(app.id);
 
         tr.innerHTML = `
           <td>${app.icon || "📦"}</td>
@@ -151,13 +195,15 @@
           <td>${app.path}</td>
           <td></td>
           <td>${app.order ?? ""}</td>
+          <td></td>
         `;
         tr.children[4].appendChild(toggleBtn);
+        tr.children[6].appendChild(deleteBtn);
         tbody.appendChild(tr);
       });
     }
 
-    async function toggleVisibility(id, newValue, buttonEl) {
+    async function toggleVisibility(id, newValue) {
       const { error } = await client
         .from("life-apps")
         .update({ is_public: newValue })
@@ -168,9 +214,52 @@
         return;
       }
 
-      buttonEl.textContent = newValue ? "公開中" : "非公開";
-      buttonEl.className = "toggle " + (newValue ? "on" : "off");
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await loadApps();
     }
+
+    async function deleteApp(id) {
+      if (!confirm("本当に削除しますか？")) return;
+
+      const { error } = await client
+        .from("life-apps")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        alert("削除に失敗しました。");
+        return;
+      }
+
+      await loadApps();
+    }
+
+    document.getElementById("add-form").onsubmit = async (e) => {
+      e.preventDefault();
+
+      const icon = document.getElementById("icon").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const category = document.getElementById("category").value.trim();
+      const path = document.getElementById("path").value.trim();
+      const order = parseInt(document.getElementById("order").value.trim());
+
+      if (!title || !category || !path || isNaN(order)) {
+        alert("全ての必須項目を正しく入力してください。");
+        return;
+      }
+
+      const { error } = await client
+        .from("life-apps")
+        .insert([{ title, category, path, icon, is_public: false, order }]);
+
+      if (error) {
+        alert("追加に失敗しました。");
+        return;
+      }
+
+      e.target.reset();
+      await loadApps();
+    };
 
     window.onload = checkAdmin;
   </script>
