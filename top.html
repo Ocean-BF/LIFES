@@ -77,7 +77,7 @@
   <nav class="bottom-nav">
     <a href="#" onclick="loadPage('home.html')"><span>🏠</span>ホーム</a>
     <a href="#" onclick="loadPage('life.html')"><span>🛍️</span>生活</a>
-    <a href="#" onclick="loadPage('edu.html')"><span>📘</span>教育</a>
+    <a href="#" onclick="loadPage('edu.html')"><span>📚</span>教育</a>
     <a href="#" onclick="loadPage('health.html')"><span>💊</span>健康</a>
     <a href="#" onclick="loadPage('settings.html')"><span>⚙️</span>設定</a>
   </nav>
@@ -107,7 +107,13 @@
       });
     }
 
-    window.onload = () => {
+    window.onload = async () => {
+      const session = (await window.supabaseClient.auth.getSession()).data.session;
+      if (!session) {
+        window.location.href = 'index.html';
+        return;
+      }
+
       const bg = localStorage.getItem("lifes_bg_color");
       const img = localStorage.getItem("lifes_bg_image");
       const op = localStorage.getItem("lifes_card_opacity");
