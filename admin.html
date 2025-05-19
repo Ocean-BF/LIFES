@@ -3,59 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>管理者パネル - スマホ対応</title>
+  <title>管理者パネル - 編集可能</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; font-size: 14px; }
     header { background: #4caf50; color: white; padding: 16px; text-align: center; font-size: 18px; }
     main { padding: 10px; }
     .hidden { display: none; }
-
-    form#add-form {
-      background: white;
-      padding: 12px;
-      margin-bottom: 16px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    form#add-form input {
-      display: block;
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 6px;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-
-    .table-container {
-      overflow-x: auto;
-      background: white;
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      min-width: 700px;
-      border-collapse: collapse;
-    }
-    th, td {
-      border-bottom: 1px solid #ddd;
-      padding: 6px;
-      text-align: left;
-      white-space: nowrap;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-
-    button {
-      font-size: 12px;
-      padding: 4px 6px;
-      margin: 2px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-    }
+    .table-container { overflow-x: auto; background: white; border-radius: 8px; }
+    table { width: 100%; min-width: 700px; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ddd; padding: 6px; text-align: left; white-space: nowrap; }
+    th { background-color: #f0f0f0; }
+    input.edit-input { font-size: 14px; width: 100%; padding: 2px; }
+    button { font-size: 12px; padding: 4px 6px; margin: 2px; border-radius: 4px; border: none; cursor: pointer; }
     button.toggle.on { background: #4caf50; color: white; }
     button.toggle.off { background: #ccc; color: #444; }
     button.delete { background: #f44336; color: white; }
@@ -66,15 +26,6 @@
   <header>管理者パネル</header>
   <main>
     <div id="admin-panel" class="hidden">
-      <form id="add-form">
-        <input id="icon" placeholder="アイコン">
-        <input id="title" placeholder="タイトル">
-        <input id="category" placeholder="カテゴリ">
-        <input id="path" placeholder="パス">
-        <input id="order" type="number" placeholder="順番">
-        <button type="submit">追加</button>
-      </form>
-
       <div class="table-container">
         <table>
           <thead>
@@ -111,6 +62,35 @@
       tbody.innerHTML = "";
       data.forEach(app => {
         const tr = document.createElement("tr");
+
+        function editableCell(field, value) {
+          const td = document.createElement("td");
+          td.textContent = value || "";
+          td.onclick = () => {
+            const input = document.createElement("input");
+            input.value = value || "";
+            input.className = "edit-input";
+            td.textContent = "";
+            td.appendChild(input);
+            input.focus();
+
+            input.onblur = async () => {
+              const newValue = input.value.trim();
+              if (newValue !== value) {
+                const update = {}; update[field] = newValue;
+                await client.from("life-apps").update(update).eq("id", app.id);
+                loadApps();
+              }
+            };
+
+            input.onkeydown = e => {
+              if (e.key === "Enter") input.blur();
+              if (e.key === "Escape") td.textContent = value;
+            };
+          };
+          return td;
+        }
+
         const toggleBtn = document.createElement("button");
         toggleBtn.textContent = app.is_public ? "公開中" : "非公開";
         toggleBtn.className = "toggle " + (app.is_public ? "on" : "off");
@@ -131,13 +111,22 @@
         downBtn.className = "updown";
         downBtn.onclick = () => moveOrder(app.id, 1);
 
-        tr.innerHTML = `
-          <td>${app.icon || "📦"}</td><td>${app.title}</td><td>${app.category}</td>
-          <td>${app.path}</td><td></td><td>${app.order ?? ""}</td><td></td>`;
-        tr.children[4].appendChild(toggleBtn);
-        tr.children[6].appendChild(upBtn);
-        tr.children[6].appendChild(downBtn);
-        tr.children[6].appendChild(deleteBtn);
+        tr.appendChild(editableCell("icon", app.icon));
+        tr.appendChild(editableCell("title", app.title));
+        tr.appendChild(editableCell("category", app.category));
+        tr.appendChild(editableCell("path", app.path));
+
+        const tdToggle = document.createElement("td");
+        tdToggle.appendChild(toggleBtn);
+        tr.appendChild(tdToggle);
+
+        tr.innerHTML += `<td>${app.order ?? ""}</td>`;
+        const tdActions = document.createElement("td");
+        tdActions.appendChild(upBtn);
+        tdActions.appendChild(downBtn);
+        tdActions.appendChild(deleteBtn);
+        tr.appendChild(tdActions);
+
         tbody.appendChild(tr);
       });
     }
@@ -164,22 +153,6 @@
       await client.from("life-apps").update({ order: current.order }).eq("id", target.id);
       loadApps();
     }
-
-    document.getElementById("add-form").onsubmit = async (e) => {
-      e.preventDefault();
-      const icon = document.getElementById("icon").value.trim();
-      const title = document.getElementById("title").value.trim();
-      const category = document.getElementById("category").value.trim();
-      const path = document.getElementById("path").value.trim();
-      const order = parseInt(document.getElementById("order").value.trim());
-      if (!title || !category || !path || isNaN(order)) {
-        alert("すべての項目を正しく入力してください");
-        return;
-      }
-      await client.from("life-apps").insert([{ icon, title, category, path, is_public: false, order }]);
-      e.target.reset();
-      loadApps();
-    };
   </script>
 </body>
 </html>
