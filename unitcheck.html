@@ -1,5 +1,10 @@
 
-<div class="unitcheck-container">
+<div class="tab-buttons">
+  <button onclick="showTab('form')">入力フォーム</button>
+  <button onclick="showTab('list')">履歴一覧</button>
+</div>
+
+<div id="form-tab">
   <form id="unit-form">
     <div class="form-group">
       <label>商品名</label>
@@ -25,7 +30,7 @@
 
     <div class="form-group">
       <label>内容量</label>
-      <input type="number" name="amount" id="amount" step="0.01" required>
+      <input type="number" name="amount" id="amount" step="0.01" value="1" required>
     </div>
 
     <div class="form-group">
@@ -45,17 +50,37 @@
   <div id="status"></div>
 </div>
 
+<div id="list-tab" style="display:none;">
+  <div id="history"></div>
+</div>
+
 <style>
-  .unitcheck-container {
-    max-width: 480px;
-    margin: auto;
-    padding: 20px;
+  .tab-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .tab-buttons button {
+    padding: 10px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    background-color: #ccc;
+    cursor: pointer;
+  }
+
+  .tab-buttons button:hover {
+    background-color: #aaa;
   }
 
   form {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    max-width: 480px;
+    margin: auto;
     font-size: 16px;
   }
 
@@ -76,7 +101,7 @@
     border-radius: 8px;
   }
 
-  button {
+  button[type="submit"] {
     padding: 12px;
     font-size: 16px;
     background-color: #007aff;
@@ -86,17 +111,44 @@
     cursor: pointer;
   }
 
-  button:hover {
-    background-color: #0051b4;
+  #history {
+    max-width: 480px;
+    margin: auto;
   }
 
-  #status {
-    margin-top: 10px;
-    text-align: center;
+  .record {
+    background: white;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+  }
+
+  .record span {
+    display: block;
+    margin: 2px 0;
+  }
+
+  .record button {
+    margin-top: 6px;
+    background-color: #ff5e57;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
   }
 </style>
 
 <script>
+async function showTab(name) {
+  document.getElementById("form-tab").style.display = name === 'form' ? "block" : "none";
+  document.getElementById("list-tab").style.display = name === 'list' ? "block" : "none";
+  if (name === "list") {
+    loadHistory();
+  }
+}
+
 (async () => {
   const form = document.getElementById("unit-form");
   const price = document.getElementById("price");
@@ -104,13 +156,14 @@
   const amount = document.getElementById("amount");
   const unit_price = document.getElementById("unit_price");
   const statusEl = document.getElementById("status");
+  const history = document.getElementById("history");
 
   function updateUnitPrice() {
     const p = parseFloat(price.value);
     const q = parseFloat(quantity.value);
     const a = parseFloat(amount.value);
-    if (p && q && a && q * a > 0) {
-      unit_price.value = (p / (q * a)).toFixed(2);
+    if (p && q > 0 && a > 0) {
+      unit_price.value = (p / q / a).toFixed(4);
     } else {
       unit_price.value = "";
     }
@@ -129,14 +182,13 @@
     const quantityVal = parseInt(quantity.value);
     const amountVal = parseFloat(amount.value);
     const unitPriceVal = parseFloat(unit_price.value);
+    const uid = (await window.supabaseClient.auth.getUser()).data.user.id;
 
-    const { data, error } = await window.supabaseClient.from("unit_prices").insert([{
+    const { error } = await window.supabaseClient.from("unit_prices").insert([{
       item_name, category, shop_name,
-      price: priceVal,
-      quantity: quantityVal,
-      amount: amountVal,
-      unit_price: unitPriceVal,
-      user_id: (await window.supabaseClient.auth.getUser()).data.user.id
+      price: priceVal, quantity: quantityVal,
+      amount: amountVal, unit_price: unitPriceVal,
+      user_id: uid
     }]);
 
     if (error) {
@@ -148,5 +200,35 @@
     }
   });
 
+  window.loadHistory = async () => {
+    const uid = (await window.supabaseClient.auth.getUser()).data.user.id;
+    const { data, error } = await window.supabaseClient
+      .from("unit_prices")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      history.innerHTML = "<p>履歴の取得に失敗しました。</p>";
+      return;
+    }
+
+    history.innerHTML = data.map(row => `
+      <div class="record">
+        <span><strong>${row.item_name}</strong>（${row.category}）</span>
+        <span>${row.quantity}個 × ${row.amount} = ￥${row.price}</span>
+        <span>単価: ￥${row.unit_price} / 単位</span>
+        <span>店名: ${row.shop_name}</span>
+        <span>${new Date(row.created_at).toLocaleString()}</span>
+        <button onclick="deleteRow(${row.id})">削除</button>
+      </div>
+    `).join("");
+  };
+
+  window.deleteRow = async (id) => {
+    if (!confirm("この記録を削除しますか？")) return;
+    const { error } = await window.supabaseClient.from("unit_prices").delete().eq("id", id);
+    if (!error) loadHistory();
+  };
 })();
 </script>
