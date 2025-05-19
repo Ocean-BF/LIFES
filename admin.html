@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アプリ管理 - 管理者専用</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+    }
+    main {
+      padding: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>管理者パネル - アプリ管理</header>
+  <main>
+    <div id="not-admin" class="hidden">
+      <p>管理者のみアクセス可能です。</p>
+    </div>
+    <div id="admin-panel" class="hidden">
+      <p>管理者として認証されました。</p>
+      <!-- アプリ一覧などのUIはここに追加していきます -->
+    </div>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+    );
+
+    async function checkAdmin() {
+      const { data: sessionData } = await client.auth.getSession();
+      if (!sessionData.session) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const { data: { user } } = await client.auth.getUser();
+      const { data: profile, error } = await client
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !profile?.is_admin) {
+        alert("管理者専用ページです。");
+        window.location.href = "top.html";
+        return;
+      }
+
+      document.getElementById("admin-panel").classList.remove("hidden");
+    }
+
+    window.onload = checkAdmin;
+  </script>
+</body>
+</html>
