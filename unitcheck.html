@@ -1,54 +1,7 @@
-<!-- unitcheck-v8: v7ベース＋編集削除対応（UI崩さず） -->
-<!-- ✅ datalist自由入力 + 編集/削除 + CSS構造保持 -->
-<style>
-  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
-  .tab-button {
-    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
-    border-radius: 6px; font-size: 1rem; min-width: 100px;
-  }
-  .tab-button.active { background: #007bff; color: white; }
-  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
-  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
-  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
-  .unit-price { font-size: 1.6rem; font-weight: bold; }
-  .buttons button, #submitButton {
-    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
-    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
-  }
-  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
-  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+<!-- unitcheck-v8: v7順序完全準拠＋編集・削除機能 -->
+<!-- ✅ 構成順保持：HTML構造 → スクリプト → スタイル -->
 
-  .filter-row { flex-wrap: wrap; overflow-x: visible; }
-
-  #historyListWrapper { overflow-x: hidden; }
-
-  .table-wrapper {
-    overflow-x: auto;
-    margin-bottom: 20px;
-  }
-
-  .history-table {
-    min-width: 700px;
-    border-collapse: collapse;
-    background: white;
-    width: 100%;
-  }
-
-  .history-table th, .history-table td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    font-size: 1rem;
-    word-break: break-word;
-    text-align: left;
-  }
-
-  .history-table th[colspan] {
-    background: #f2f2f2;
-    font-size: 1.1rem;
-  }
-</style>
-
-<!-- HTML構造（フォーム＋履歴） -->
+<!-- HTML構造（フォームと履歴） -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -82,6 +35,7 @@
   </div>
 </div>
 
+<!-- スクリプト（JS機能） -->
 <script>
   const priceInput = document.getElementById("price");
   const quantityInput = document.getElementById("quantity");
@@ -135,8 +89,8 @@
     if (!error) {
       document.getElementById("unitForm").reset();
       calcUnitPrice();
-      loadHistory();
       loadOptions();
+      loadHistory();
     }
   });
 
@@ -147,7 +101,7 @@
       const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
       const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
       const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
-      const setList = (id, values) => {
+      const setDatalist = (id, values) => {
         const el = document.getElementById(id);
         el.innerHTML = "";
         values.forEach(v => {
@@ -156,11 +110,22 @@
           el.appendChild(option);
         });
       };
-      setList("item_list", items);
-      setList("category_list", cats);
-      setList("shop_list", shops);
-      setList("filterItem", ["", ...items]);
-      setList("filterCategory", ["", ...cats]);
+      setDatalist("item_list", items);
+      setDatalist("category_list", cats);
+      setDatalist("shop_list", shops);
+
+      const setFilter = (id, values) => {
+        const el = document.getElementById(id);
+        el.innerHTML = '<option value="">すべて</option>';
+        values.forEach(v => {
+          const option = document.createElement("option");
+          option.value = v;
+          option.textContent = v;
+          el.appendChild(option);
+        });
+      };
+      setFilter("filterItem", items);
+      setFilter("filterCategory", cats);
     }
   }
 
@@ -269,3 +234,38 @@
     calcUnitPrice();
   });
 </script>
+
+<!-- CSS（構造を保ったまま最終に配置） -->
+<style>
+  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
+  .tab-button {
+    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
+    border-radius: 6px; font-size: 1rem; min-width: 100px;
+  }
+  .tab-button.active { background: #007bff; color: white; }
+  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
+  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
+  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
+  .unit-price { font-size: 1.6rem; font-weight: bold; }
+  .buttons button, #submitButton {
+    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
+    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+  }
+  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
+  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+
+  .filter-row { flex-wrap: wrap; overflow-x: visible; }
+  #historyListWrapper { overflow-x: hidden; }
+
+  .table-wrapper { overflow-x: auto; margin-bottom: 20px; }
+  .history-table {
+    min-width: 700px; border-collapse: collapse; background: white; width: 100%;
+  }
+  .history-table th, .history-table td {
+    border: 1px solid #ccc; padding: 6px; font-size: 1rem;
+    word-break: break-word; text-align: left;
+  }
+  .history-table th[colspan] {
+    background: #f2f2f2; font-size: 1.1rem;
+  }
+</style>
