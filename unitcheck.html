@@ -1,247 +1,125 @@
+
+<!-- unitcheck.html (embed版 修正済み) -->
 <div class="tab-buttons">
-  <button onclick="showTab('form')">入力フォーム</button>
-  <button onclick="showTab('list')">履歴一覧</button>
+  <button id="formTab" class="tab-button active">入力フォーム</button>
+  <button id="historyTab" class="tab-button">履歴一覧</button>
 </div>
 
-<div id="form-tab">
-  <form id="unit-form">
-    <div class="form-row">
-      <label>商品名</label><input type="text" id="item_name" required>
+<div id="formSection" class="section">
+  <form id="unitForm">
+    <div class="row"><label>商品名</label><input id="item_name" required></div>
+    <div class="row"><label>カテゴリ</label><input id="category"></div>
+    <div class="row"><label>価格（合計）</label><input id="price" required></div>
+    <div class="row"><label>数量</label><input id="quantity" value="1" required></div>
+    <div class="row"><label>内容量</label><input id="volume" value="1" required></div>
+    <div class="row"><label>店名</label><input id="shop_name"></div>
+    <div class="row">
+      <label>単価（自動計算）</label>
+      <div id="unitPriceDisplay" class="unit-price">-- 円</div>
     </div>
-    <div class="form-row">
-      <label>カテゴリ</label><input type="text" id="category" required>
+    <div class="row buttons">
+      <button type="button" id="taxIn">税込価格にする</button>
+      <button type="button" id="taxOut">税抜価格にする</button>
     </div>
-    <div class="form-row">
-      <label>価格</label><input type="number" id="price" required>
-    </div>
-    <div class="form-row">
-      <label>数量</label><input type="number" id="quantity">
-    </div>
-    <div class="form-row">
-      <label>内容量</label><input type="number" id="amount">
-    </div>
-    <div class="form-row">
-      <label>店名</label><input type="text" id="shop_name">
-    </div>
-
-    <div class="tax-buttons">
-      <button type="button" onclick="adjustTax(1.1)">税込価格にする</button>
-      <button type="button" onclick="adjustTax(1/1.1)">税抜価格にする</button>
-    </div>
-
-    <div class="unit-price-display" id="unit_price">単価：-- 円</div>
-    <div style="text-align:center;"><button type="submit">登録する</button></div>
+    <div class="row"><button type="submit" id="submitButton">登録する</button></div>
+    <div id="status" class="status"></div>
   </form>
-
-  <div id="top3" style="margin-top:20px;"></div>
-  <div id="status"></div>
 </div>
 
-<div id="list-tab" style="display:none;">
-  <div id="history"></div>
+<div id="historySection" class="section" style="display:none;">
+  <div id="historyList">履歴を読み込み中...</div>
 </div>
-
-<style>
-  .tab-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .tab-buttons button {
-    padding: 10px 16px;
-    font-size: 14px;
-    border: 2px solid #007aff;
-    border-radius: 8px;
-    background-color: white;
-    color: #007aff;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  .form-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  .form-row label {
-    width: 35%;
-    font-size: 16px;
-    font-weight: bold;
-  }
-  .form-row input {
-    width: 60%;
-    font-size: 16px;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-weight: bold;
-  }
-  .unit-price-display {
-    text-align: center;
-    font-size: 28px;
-    font-weight: bold;
-    margin: 12px 0;
-  }
-  #status {
-    text-align: center;
-    margin-top: 10px;
-  }
-  .tax-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .tax-buttons button {
-    padding: 6px 12px;
-    font-size: 14px;
-    font-weight: bold;
-    border: 1px solid #007aff;
-    border-radius: 6px;
-    background: #f0f8ff;
-    cursor: pointer;
-  }
-  .record {
-    background: #fff;
-    margin: 10px 0;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-  }
-  .record button {
-    margin-top: 6px;
-    background-color: #ff5e57;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 10px;
-    cursor: pointer;
-  }
-  h3 {
-    margin: 8px 0 4px;
-    font-size: 18px;
-    border-bottom: 1px solid #007aff;
-  }
-</style>
 
 <script>
-let uid = "";
-window.onload = async () => {
-  uid = (await window.supabaseClient.auth.getUser()).data.user.id;
-  showTab('form');
-};
+  const priceInput = document.getElementById("price");
+  const quantityInput = document.getElementById("quantity");
+  const volumeInput = document.getElementById("volume");
+  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
+  const status = document.getElementById("status");
 
-function showTab(tab) {
-  document.getElementById("form-tab").style.display = tab === "form" ? "block" : "none";
-  document.getElementById("list-tab").style.display = tab === "list" ? "block" : "none";
-  if (tab === "list") loadHistory();
-}
-
-function adjustTax(multiplier) {
-  const price = document.getElementById("price");
-  price.value = (parseFloat(price.value || 0) * multiplier).toFixed(0);
-  updateUnitPrice();
-}
-
-async function updateUnitPrice() {
-  const price = parseFloat(document.getElementById("price").value);
-  const qty = parseFloat(document.getElementById("quantity").value || 1);
-  const amt = parseFloat(document.getElementById("amount").value || 1);
-  const up = document.getElementById("unit_price");
-  if (price && qty && amt && qty * amt !== 0) {
-    const result = price / qty / amt;
-    up.textContent = `単価：${result.toFixed(1)} 円`;
-    return result;
-  } else {
-    up.textContent = `単価：-- 円`;
+  function calcUnitPrice() {
+    const price = parseFloat(priceInput.value);
+    const quantity = parseFloat(quantityInput.value || 1);
+    const volume = parseFloat(volumeInput.value || 1);
+    if (!isNaN(price) && quantity > 0 && volume > 0) {
+      const unit = price / quantity / volume;
+      unitPriceDisplay.textContent = `単価：${unit.toFixed(1)} 円`;
+      return unit;
+    }
+    unitPriceDisplay.textContent = "単価：-- 円";
     return null;
   }
-}
 
-document.querySelectorAll("#price,#quantity,#amount").forEach(el => {
-  el.addEventListener("input", updateUnitPrice);
-});
+  priceInput.addEventListener("input", calcUnitPrice);
+  quantityInput.addEventListener("input", calcUnitPrice);
+  volumeInput.addEventListener("input", calcUnitPrice);
 
-document.getElementById("unit-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const item_name = document.getElementById("item_name").value.trim();
-  const category = document.getElementById("category").value.trim();
-  const shop_name = document.getElementById("shop_name").value.trim();
-  const price = parseFloat(document.getElementById("price").value);
-  const quantity = parseFloat(document.getElementById("quantity").value || 1);
-  const amount = parseFloat(document.getElementById("amount").value || 1);
-  const unit_price = await updateUnitPrice();
-
-  if (!item_name || !category || !price || !unit_price) {
-    document.getElementById("status").textContent = "必須項目が不足しています。";
-    return;
-  }
-
-  const { error } = await window.supabaseClient.from("unit_prices").insert([{
-    item_name, category, price, quantity, amount, shop_name,
-    unit_price, user_id: uid
-  }]);
-
-  if (error) {
-    document.getElementById("status").textContent = "登録に失敗しました。";
-  } else {
-    document.getElementById("status").textContent = "登録しました！";
-    document.getElementById("unit-form").reset();
-    document.getElementById("unit_price").textContent = "単価：-- 円";
-    showTop3(item_name, category);
-  }
-});
-
-async function showTop3(name, cat) {
-  const { data } = await window.supabaseClient.from("unit_prices")
-    .select("unit_price, price, quantity, amount, shop_name, created_at")
-    .eq("item_name", name).eq("category", cat)
-    .eq("user_id", uid).order("unit_price", { ascending: true }).limit(3);
-
-  const div = document.getElementById("top3");
-  if (data.length === 0) {
-    div.innerHTML = "";
-    return;
-  }
-
-  div.innerHTML = `<h3>過去の上位3件</h3>` + data.map(d => `
-    <div class="record">
-      <span>${d.quantity}×${d.amount} → ¥${d.price}</span>
-      <span>単価：${d.unit_price.toFixed(1)}円 / ${d.shop_name}</span>
-      <span>${new Date(d.created_at).toLocaleDateString()}</span>
-    </div>
-  `).join("");
-}
-
-async function loadHistory() {
-  const { data } = await window.supabaseClient.from("unit_prices")
-    .select("*").eq("user_id", uid).order("unit_price", { ascending: true });
-
-  const grouped = {};
-  data.forEach(d => {
-    if (!grouped[d.item_name]) grouped[d.item_name] = [];
-    grouped[d.item_name].push(d);
+  document.getElementById("taxIn").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
+    calcUnitPrice();
   });
 
-  const html = Object.entries(grouped).map(([item, rows]) => `
-    <h3>${item}</h3>
-    ${rows.map(r => `
-      <div class="record">
-        <span>${r.category} / ${r.shop_name}</span>
-        <span>${r.quantity}×${r.amount} → ¥${r.price}</span>
-        <span>単価：${r.unit_price.toFixed(1)}円</span>
-        <span>${new Date(r.created_at).toLocaleDateString()}</span>
-        <button onclick="deleteRow(${r.id})">削除</button>
-      </div>
-    `).join("")}
-  `).join("");
+  document.getElementById("taxOut").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
+    calcUnitPrice();
+  });
 
-  document.getElementById("history").innerHTML = html;
-}
+  // Supabase登録
+  document.getElementById("unitForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const unit = calcUnitPrice();
+    const supabase = window.supabaseClient;
+    const { data, error } = await supabase.from("unit_prices").insert([{
+      item_name: document.getElementById("item_name").value,
+      category: document.getElementById("category").value,
+      price: parseFloat(priceInput.value),
+      quantity: parseFloat(quantityInput.value),
+      volume: parseFloat(volumeInput.value),
+      unit_price: unit,
+      shop_name: document.getElementById("shop_name").value
+    }]);
+    if (error) {
+      status.textContent = "登録に失敗しました：" + error.message;
+    } else {
+      status.textContent = "登録しました。";
+      document.getElementById("unitForm").reset();
+      calcUnitPrice();
+    }
+  });
 
-async function deleteRow(id) {
-  await window.supabaseClient.from("unit_prices").delete().eq("id", id);
-  loadHistory();
-}
+  // タブ切り替え
+  document.getElementById("formTab").addEventListener("click", () => {
+    document.getElementById("formSection").style.display = "";
+    document.getElementById("historySection").style.display = "none";
+    document.getElementById("formTab").classList.add("active");
+    document.getElementById("historyTab").classList.remove("active");
+  });
+
+  document.getElementById("historyTab").addEventListener("click", () => {
+    document.getElementById("formSection").style.display = "none";
+    document.getElementById("historySection").style.display = "";
+    document.getElementById("formTab").classList.remove("active");
+    document.getElementById("historyTab").classList.add("active");
+  });
 </script>
+
+<style>
+  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
+  .tab-button {
+    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
+    border-radius: 6px; font-size: 1rem; min-width: 100px;
+  }
+  .tab-button.active { background: #007bff; color: white; }
+  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; }
+  .row input { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
+  label { width: 30%; min-width: 80px; font-size: 1.2rem; font-weight: bold; }
+  .unit-price { font-size: 1.6rem; font-weight: bold; }
+  .buttons button, #submitButton {
+    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
+    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+  }
+  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
+  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+</style>
