@@ -58,7 +58,18 @@
 
 <!-- 履歴 -->
 <div id="historySection" class="section" style="display:none;">
-  <div class="row filter-row">
+  
+<div class="filter-row">
+  <div class="row">
+    <label>商品名</label>
+    <select id="filterItem"><option value="">すべて</option></select>
+  </div>
+  <div class="row">
+    <label>カテゴリ</label>
+    <select id="filterCategory"><option value="">すべて</option></select>
+  </div>
+</div>
+
     <label>商品名</label>
     <select id="filterItem"><option value="">すべて</option></select>
     <label>カテゴリ</label>
@@ -76,7 +87,14 @@
   </div>
 </div>
 
-<!-- スクリプト & スタイルは省略。別処理で挿入可能。 -->
+<div id="deleteModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <p>本当に削除しますか？</p>
+    <button id="confirmDeleteBtn">削除</button>
+    <button id="cancelDeleteBtn">キャンセル</button>
+  </div>
+</div>
+
 
 <script>
   const priceInput = document.getElementById("price");
@@ -275,7 +293,7 @@
         });
 
         tr.querySelector(".delete-btn").addEventListener("click", async () => {
-          if (!confirm("本当に削除しますか？")) return;
+          deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
           const supabase = window.supabaseClient;
           await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
           loadHistory();
@@ -310,6 +328,22 @@
     loadOptions();
     calcUnitPrice();
   });
+
+let deleteTarget = null;
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+  const supabase = window.supabaseClient;
+  if (deleteTarget) {
+    await supabase.from("unit_prices").delete()
+      .eq("item_name", deleteTarget.item)
+      .eq("created_at", deleteTarget.created_at);
+    document.getElementById("deleteModal").style.display = "none";
+    loadHistory();
+  }
+});
+document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+  document.getElementById("deleteModal").style.display = "none";
+});
+
 </script>
 <style>
   body {
@@ -496,6 +530,28 @@
   border: 1px solid #888;
   background: white;
   cursor: pointer;
+}
+
+
+.row {
+  display: flex;
+  align-items: center;
+  margin: 8px 4px;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+label {
+  width: 35%;
+  min-width: auto;
+  font-size: 1.1rem;
+}
+.input-combo {
+  display: flex;
+  width: 65%;
+}
+.input-combo input {
+  flex: 1;
+  min-width: 0;
 }
 
 </style>
