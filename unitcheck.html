@@ -1,5 +1,5 @@
 
-<!-- unitcheck.html embed版＋履歴とプルダウン機能付き -->
+<!-- unitcheck-v3 表形式＋プルダウン修正版 -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -7,12 +7,12 @@
 
 <div id="formSection" class="section">
   <form id="unitForm">
-    <div class="row"><label>商品名</label><input list="item_list" id="item_name" required><datalist id="item_list"></datalist></div>
-    <div class="row"><label>カテゴリ</label><input list="category_list" id="category"><datalist id="category_list"></datalist></div>
+    <div class="row"><label>商品名</label><input id="item_name" list="item_list" required><datalist id="item_list"></datalist></div>
+    <div class="row"><label>カテゴリ</label><input id="category" list="category_list"><datalist id="category_list"></datalist></div>
     <div class="row"><label>価格（合計）</label><input id="price" required></div>
     <div class="row"><label>数量</label><input id="quantity" value="1" required></div>
     <div class="row"><label>内容量</label><input id="volume" value="1" required></div>
-    <div class="row"><label>店名</label><input list="shop_list" id="shop_name"><datalist id="shop_list"></datalist></div>
+    <div class="row"><label>店名</label><input id="shop_name" list="shop_list"><datalist id="shop_list"></datalist></div>
     <div class="row"><label>単価（自動計算）</label><div id="unitPriceDisplay" class="unit-price">-- 円</div></div>
     <div class="row buttons">
       <button type="button" id="taxIn">税込価格にする</button>
@@ -83,7 +83,7 @@
       document.getElementById("unitForm").reset();
       calcUnitPrice();
       loadHistory();
-      loadOptions();  // 値更新
+      loadOptions();
     }
   });
 
@@ -94,24 +94,24 @@
       const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
       const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
       const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
-      const setOptions = (list, elementId) => {
-        const el = document.getElementById(elementId);
+      const setList = (id, values) => {
+        const el = document.getElementById(id);
         el.innerHTML = "";
-        list.forEach(val => {
-          const opt = document.createElement("option");
-          opt.value = val;
-          el.appendChild(opt);
+        values.forEach(v => {
+          const option = document.createElement("option");
+          option.value = v;
+          el.appendChild(option);
         });
       };
-      setOptions(items, "item_list");
-      setOptions(cats, "category_list");
-      setOptions(shops, "shop_list");
+      setList("item_list", items);
+      setList("category_list", cats);
+      setList("shop_list", shops);
     }
   }
 
   async function loadHistory() {
     const supabase = window.supabaseClient;
-    const { data, error } = await supabase.from("unit_prices").select("*").order("unit_price", { ascending: true });
+    const { data, error } = await supabase.from("unit_prices").select("*");
     const container = document.getElementById("historyList");
     if (error || !data) {
       container.textContent = "履歴の取得に失敗しました。";
@@ -121,15 +121,33 @@
       container.textContent = "登録された履歴がありません。";
       return;
     }
-    container.innerHTML = "";
+
+    // グループごとにまとめる
+    const grouped = {};
     data.forEach(row => {
-      const div = document.createElement("div");
-      div.className = "history-card";
-      div.innerHTML = `
-        <strong>${row.item_name}</strong>（${row.category || "カテゴリなし"}）<br>
-        ${row.shop_name || "不明"} - 単価：<strong>${row.unit_price?.toFixed(1)} 円</strong>
-      `;
-      container.appendChild(div);
+      if (!row.item_name) return;
+      if (!grouped[row.item_name]) grouped[row.item_name] = [];
+      grouped[row.item_name].push(row);
+    });
+
+    // 表形式で表示
+    container.innerHTML = "";
+    Object.entries(grouped).forEach(([item, rows]) => {
+      const table = document.createElement("table");
+      table.className = "history-table";
+      const thead = document.createElement("thead");
+      thead.innerHTML = `<tr><th colspan="4">${item}</th></tr><tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>`;
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      rows.sort((a, b) => a.unit_price - b.unit_price);
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${r.category || ""}</td><td>${r.shop_name || ""}</td><td>${r.unit_price?.toFixed(1)}</td><td>${r.created_at?.split("T")[0]}</td>`;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
     });
   }
 
@@ -172,8 +190,12 @@
   }
   #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
   .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
-  .history-card {
-    margin: 6px 8px; padding: 8px; border-radius: 8px; background: #f0f0f0;
-    font-size: 1.1rem; font-weight: bold;
+
+  .history-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; }
+  .history-table th, .history-table td {
+    border: 1px solid #ccc; padding: 6px; font-size: 1rem;
+  }
+  .history-table th[colspan] {
+    background: #f2f2f2; font-size: 1.1rem;
   }
 </style>
