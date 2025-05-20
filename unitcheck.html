@@ -237,9 +237,6 @@
   const categoryMatch = !filterCategory || r.category === filterCategory;
   return itemMatch && categoryMatch;
 });
-      (!filterItem || r.item_name === filterItem) &&
-      (!filterCategory || r.category === filterCategory)
-    );
     if (filtered.length === 0) {
       container.textContent = "登録された履歴がありません。";
       return;
