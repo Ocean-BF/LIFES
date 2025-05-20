@@ -1,5 +1,5 @@
 
-<!-- unitcheck.html (embed版 修正済み) -->
+<!-- unitcheck.html embed版＋履歴とプルダウン機能付き -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -7,16 +7,13 @@
 
 <div id="formSection" class="section">
   <form id="unitForm">
-    <div class="row"><label>商品名</label><input id="item_name" required></div>
-    <div class="row"><label>カテゴリ</label><input id="category"></div>
+    <div class="row"><label>商品名</label><input list="item_list" id="item_name" required><datalist id="item_list"></datalist></div>
+    <div class="row"><label>カテゴリ</label><input list="category_list" id="category"><datalist id="category_list"></datalist></div>
     <div class="row"><label>価格（合計）</label><input id="price" required></div>
     <div class="row"><label>数量</label><input id="quantity" value="1" required></div>
     <div class="row"><label>内容量</label><input id="volume" value="1" required></div>
-    <div class="row"><label>店名</label><input id="shop_name"></div>
-    <div class="row">
-      <label>単価（自動計算）</label>
-      <div id="unitPriceDisplay" class="unit-price">-- 円</div>
-    </div>
+    <div class="row"><label>店名</label><input list="shop_list" id="shop_name"><datalist id="shop_list"></datalist></div>
+    <div class="row"><label>単価（自動計算）</label><div id="unitPriceDisplay" class="unit-price">-- 円</div></div>
     <div class="row buttons">
       <button type="button" id="taxIn">税込価格にする</button>
       <button type="button" id="taxOut">税抜価格にする</button>
@@ -66,7 +63,6 @@
     calcUnitPrice();
   });
 
-  // Supabase登録
   document.getElementById("unitForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const unit = calcUnitPrice();
@@ -86,8 +82,56 @@
       status.textContent = "登録しました。";
       document.getElementById("unitForm").reset();
       calcUnitPrice();
+      loadHistory();
+      loadOptions();  // 値更新
     }
   });
+
+  async function loadOptions() {
+    const supabase = window.supabaseClient;
+    const { data, error } = await supabase.from("unit_prices").select("item_name, category, shop_name");
+    if (data) {
+      const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
+      const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
+      const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
+      const setOptions = (list, elementId) => {
+        const el = document.getElementById(elementId);
+        el.innerHTML = "";
+        list.forEach(val => {
+          const opt = document.createElement("option");
+          opt.value = val;
+          el.appendChild(opt);
+        });
+      };
+      setOptions(items, "item_list");
+      setOptions(cats, "category_list");
+      setOptions(shops, "shop_list");
+    }
+  }
+
+  async function loadHistory() {
+    const supabase = window.supabaseClient;
+    const { data, error } = await supabase.from("unit_prices").select("*").order("unit_price", { ascending: true });
+    const container = document.getElementById("historyList");
+    if (error || !data) {
+      container.textContent = "履歴の取得に失敗しました。";
+      return;
+    }
+    if (data.length === 0) {
+      container.textContent = "登録された履歴がありません。";
+      return;
+    }
+    container.innerHTML = "";
+    data.forEach(row => {
+      const div = document.createElement("div");
+      div.className = "history-card";
+      div.innerHTML = `
+        <strong>${row.item_name}</strong>（${row.category || "カテゴリなし"}）<br>
+        ${row.shop_name || "不明"} - 単価：<strong>${row.unit_price?.toFixed(1)} 円</strong>
+      `;
+      container.appendChild(div);
+    });
+  }
 
   // タブ切り替え
   document.getElementById("formTab").addEventListener("click", () => {
@@ -102,6 +146,12 @@
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
+    loadHistory();
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    loadOptions();
+    calcUnitPrice();
   });
 </script>
 
@@ -122,4 +172,8 @@
   }
   #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
   .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+  .history-card {
+    margin: 6px 8px; padding: 8px; border-radius: 8px; background: #f0f0f0;
+    font-size: 1.1rem; font-weight: bold;
+  }
 </style>
