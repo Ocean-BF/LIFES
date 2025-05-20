@@ -1,4 +1,4 @@
-<!-- unitcheck-v6: 表記修正・select+自由入力・フィルター・横スクロール -->
+<!-- unitcheck-v7: 自由入力＋候補選択対応・表スクロール制御・表幅統一 -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -47,13 +47,15 @@
 </div>
 
 <div id="historySection" class="section" style="display:none;">
-  <div class="row">
+  <div class="row filter-row">
     <label>商品名</label>
     <select id="filterItem"><option value="">すべて</option></select>
     <label>カテゴリ</label>
     <select id="filterCategory"><option value="">すべて</option></select>
   </div>
-  <div id="historyList" style="overflow-x:auto;">履歴を読み込み中...</div>
+  <div id="historyListWrapper">
+    <div id="historyList">履歴を読み込み中...</div>
+  </div>
 </div>
 
 <script>
@@ -118,7 +120,7 @@
 
   async function loadOptions() {
     const supabase = window.supabaseClient;
-    const { data, error } = await supabase.from("unit_prices").select("item_name, category, shop_name");
+    const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
     if (data) {
       const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
       const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
@@ -154,9 +156,9 @@
 
   async function loadHistory() {
     const supabase = window.supabaseClient;
-    const { data, error } = await supabase.from("unit_prices").select("*");
+    const { data } = await supabase.from("unit_prices").select("*");
     const container = document.getElementById("historyList");
-    if (error || !data) {
+    if (!data) {
       container.textContent = "履歴の取得に失敗しました。";
       return;
     }
@@ -183,15 +185,14 @@
     container.innerHTML = "";
     Object.entries(grouped).forEach(([item, rows]) => {
       const wrapper = document.createElement("div");
-      wrapper.style.overflowX = "auto";
+      wrapper.className = "table-wrapper";
       const table = document.createElement("table");
       table.className = "history-table";
-      const thead = document.createElement("thead");
-      thead.innerHTML = `
-        <tr><th colspan="4">${item}</th></tr>
-        <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>`;
-      table.appendChild(thead);
-
+      table.innerHTML = `
+        <thead>
+          <tr><th colspan="4">${item}</th></tr>
+          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>
+        </thead>`;
       const tbody = document.createElement("tbody");
       rows.sort((a, b) => a.unit_price - b.unit_price);
       rows.forEach(r => {
@@ -252,12 +253,31 @@
   #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
   .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
 
-  .history-table { width: max-content; border-collapse: collapse; margin-bottom: 20px; background: white; }
-  .history-table th, .history-table td {
-    border: 1px solid #ccc; padding: 6px; font-size: 1rem;
-    white-space: nowrap;
+  .filter-row { flex-wrap: wrap; overflow-x: visible; }
+
+  #historyListWrapper { overflow-x: hidden; }
+
+  .table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
   }
+
+  .history-table {
+    min-width: 600px;
+    border-collapse: collapse;
+    background: white;
+    width: 100%;
+  }
+
+  .history-table th, .history-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1rem;
+    word-break: break-word;
+  }
+
   .history-table th[colspan] {
-    background: #f2f2f2; font-size: 1.1rem;
+    background: #f2f2f2;
+    font-size: 1.1rem;
   }
 </style>
