@@ -281,28 +281,119 @@
     calcUnitPrice();
   });
 </script>
-
 <style>
-  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
+  body {
+    font-family: sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tab-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+  }
+
   .tab-button {
-    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
-    border-radius: 6px; font-size: 1rem; min-width: 100px;
+    padding: 8px 16px;
+    border: 2px solid #007bff;
+    background: white;
+    font-weight: bold;
+    border-radius: 6px;
+    font-size: 1rem;
+    min-width: 100px;
   }
-  .tab-button.active { background: #007bff; color: white; }
-  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
-  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
-  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
-  .unit-price { font-size: 1.6rem; font-weight: bold; }
-  .buttons button, #submitButton {
-    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
-    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+
+  .tab-button.active {
+    background: #007bff;
+    color: white;
   }
-  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
-  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
 
-  .filter-row { flex-wrap: wrap; overflow-x: visible; }
+  .section {
+    padding: 10px;
+  }
 
-  #historyListWrapper { overflow-x: hidden; }
+  .row {
+    display: flex;
+    align-items: center;
+    margin: 10px 8px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .row input,
+  .row select {
+    flex: 1;
+    font-size: 1.2rem;
+    padding: 4px 8px;
+    font-weight: bold;
+  }
+
+  .row button {
+    font-size: 1rem;
+  }
+
+  .input-combo {
+    display: flex;
+    flex: 1;
+  }
+
+  .dropdown-btn {
+    margin-left: 4px;
+    padding: 4px 8px;
+    font-size: 1rem;
+    border: 1px solid #888;
+    background: white;
+    cursor: pointer;
+  }
+
+  label {
+    width: 30%;
+    min-width: 100px;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .unit-price {
+    font-size: 1.6rem;
+    font-weight: bold;
+  }
+
+  .buttons button,
+  #submitButton {
+    padding: 6px 16px;
+    border: 2px solid #007bff;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: white;
+    color: #007bff;
+  }
+
+  #submitButton {
+    background: #007bff;
+    color: white;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .status {
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+    color: red;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  #historyListWrapper {
+    overflow-x: hidden;
+  }
 
   .table-wrapper {
     overflow-x: auto;
@@ -314,40 +405,48 @@
     border-collapse: collapse;
     background: white;
     width: 100%;
+    table-layout: fixed;
   }
 
-  .history-table th, .history-table td {
+  .history-table th,
+  .history-table td {
     border: 1px solid #ccc;
     padding: 6px;
     font-size: 1rem;
     word-break: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
   }
 
   .history-table th[colspan] {
     background: #f2f2f2;
     font-size: 1.1rem;
+    text-align: left;
   }
+
   .modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-  }
-  .modal-content {
-    background: white; padding: 10px; border-radius: 8px; max-height: 60vh; overflow-y: auto; width: 80%;
-  }
-  .history-table {
-    table-layout: fixed;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
   }
-  .history-table th:nth-child(1),
-  .history-table td:nth-child(1) { width: 20%; }
-  .history-table th:nth-child(2),
-  .history-table td:nth-child(2) { width: 20%; }
-  .history-table th:nth-child(3),
-  .history-table td:nth-child(3) { width: 15%; }
-  .history-table th:nth-child(4),
-  .history-table td:nth-child(4) { width: 15%; }
-  .history-table th:nth-child(5),
-  .history-table td:nth-child(5),
-  .history-table th:nth-child(6),
-  .history-table td:nth-child(6) { width: 15%; text-align: center; }
+
+  .modal-content {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    width: 80%;
+  }
+
+  #modalList li:hover {
+    background: #e0e0e0;
+  }
 </style>
