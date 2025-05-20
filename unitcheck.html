@@ -251,6 +251,36 @@
           <td><button class="edit-btn">編集</button></td>
           <td><button class="delete-btn">削除</button></td>`;
         tbody.appendChild(tr);
+        tr.querySelector(".edit-btn").addEventListener("click", () => {
+          const tds = tr.querySelectorAll("td");
+          const original = [...tds].map(td => td.textContent);
+          tr.innerHTML = `
+            <td><input value="${original[0]}"></td>
+            <td><input value="${original[1]}"></td>
+            <td><input value="${original[2]}"></td>
+            <td>${original[3]}</td>
+            <td><button class="save-btn">保存</button></td>
+            <td><button class="cancel-btn">キャンセル</button></td>`;
+          tr.querySelector(".save-btn").addEventListener("click", async () => {
+            const inputs = tr.querySelectorAll("input");
+            const supabase = window.supabaseClient;
+            await supabase.from("unit_prices").update({
+              category: inputs[0].value,
+              shop_name: inputs[1].value,
+              unit_price: parseFloat(inputs[2].value)
+            }).eq("item_name", item);
+            loadHistory();
+          });
+          tr.querySelector(".cancel-btn").addEventListener("click", loadHistory);
+        });
+
+        tr.querySelector(".delete-btn").addEventListener("click", async () => {
+          if (!confirm("本当に削除しますか？")) return;
+          const supabase = window.supabaseClient;
+          await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
+          loadHistory();
+        });
+
       });
       table.appendChild(tbody);
       wrapper.appendChild(table);
@@ -449,4 +479,23 @@
   #modalList li:hover {
     background: #e0e0e0;
   }
+
+.input-combo {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+}
+.input-combo input {
+  flex: 1;
+  min-width: 0;
+}
+.dropdown-btn {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 1rem;
+  border: 1px solid #888;
+  background: white;
+  cursor: pointer;
+}
+
 </style>
