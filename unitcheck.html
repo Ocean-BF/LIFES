@@ -1,5 +1,4 @@
-
-<!-- unitcheck-v3 表形式＋プルダウン修正版 -->
+<!-- unitcheck-v5: select対応＋フィルター＋編集削除付き -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -7,12 +6,12 @@
 
 <div id="formSection" class="section">
   <form id="unitForm">
-    <div class="row"><label>商品名</label><input id="item_name" list="item_list" required><datalist id="item_list"></datalist></div>
-    <div class="row"><label>カテゴリ</label><input id="category" list="category_list"><datalist id="category_list"></datalist></div>
+    <div class="row"><label>商品名</label><select id="item_name" required></select></div>
+    <div class="row"><label>カテゴリ</label><select id="category"></select></div>
     <div class="row"><label>価格（合計）</label><input id="price" required></div>
     <div class="row"><label>数量</label><input id="quantity" value="1" required></div>
     <div class="row"><label>内容量</label><input id="volume" value="1" required></div>
-    <div class="row"><label>店名</label><input id="shop_name" list="shop_list"><datalist id="shop_list"></datalist></div>
+    <div class="row"><label>店名</label><select id="shop_name"></select></div>
     <div class="row"><label>単価（自動計算）</label><div id="unitPriceDisplay" class="unit-price">-- 円</div></div>
     <div class="row buttons">
       <button type="button" id="taxIn">税込価格にする</button>
@@ -24,7 +23,11 @@
 </div>
 
 <div id="historySection" class="section" style="display:none;">
-  <div id="historyList">履歴を読み込み中...</div>
+  <div class="row">
+    <label>商品名</label><select id="filterItem"><option value="">すべて</option></select>
+    <label>カテゴリ</label><select id="filterCategory"><option value="">すべて</option></select>
+  </div>
+  <div id="historyList" style="overflow-x:auto;">履歴を読み込み中...</div>
 </div>
 
 <script>
@@ -94,18 +97,21 @@
       const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
       const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
       const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
-      const setList = (id, values) => {
+      const setSelect = (id, values) => {
         const el = document.getElementById(id);
         el.innerHTML = "";
         values.forEach(v => {
           const option = document.createElement("option");
           option.value = v;
+          option.textContent = v;
           el.appendChild(option);
         });
       };
-      setList("item_list", items);
-      setList("category_list", cats);
-      setList("shop_list", shops);
+      setSelect("item_name", items);
+      setSelect("category", cats);
+      setSelect("shop_name", shops);
+      setSelect("filterItem", ["", ...items]);
+      setSelect("filterCategory", ["", ...cats]);
     }
   }
 
@@ -117,33 +123,45 @@
       container.textContent = "履歴の取得に失敗しました。";
       return;
     }
-    if (data.length === 0) {
+
+    const filterItem = document.getElementById("filterItem").value;
+    const filterCategory = document.getElementById("filterCategory").value;
+    const filtered = data.filter(r =>
+      (!filterItem || r.item_name === filterItem) &&
+      (!filterCategory || r.category === filterCategory)
+    );
+
+    if (filtered.length === 0) {
       container.textContent = "登録された履歴がありません。";
       return;
     }
 
-    // グループごとにまとめる
     const grouped = {};
-    data.forEach(row => {
+    filtered.forEach(row => {
       if (!row.item_name) return;
       if (!grouped[row.item_name]) grouped[row.item_name] = [];
       grouped[row.item_name].push(row);
     });
 
-    // 表形式で表示
     container.innerHTML = "";
     Object.entries(grouped).forEach(([item, rows]) => {
       const table = document.createElement("table");
       table.className = "history-table";
       const thead = document.createElement("thead");
-      thead.innerHTML = `<tr><th colspan="4">${item}</th></tr><tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>`;
+      thead.innerHTML = `
+        <tr><th colspan="6">${item}</th></tr>
+        <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>編集</th><th>削除</th></tr>`;
       table.appendChild(thead);
 
       const tbody = document.createElement("tbody");
       rows.sort((a, b) => a.unit_price - b.unit_price);
       rows.forEach(r => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${r.category || ""}</td><td>${r.shop_name || ""}</td><td>${r.unit_price?.toFixed(1)}</td><td>${r.created_at?.split("T")[0]}</td>`;
+        tr.innerHTML = `
+          <td>${r.category || ""}</td><td>${r.shop_name || ""}</td>
+          <td>${r.unit_price?.toFixed(1)}</td><td>${r.created_at?.split("T")[0]}</td>
+          <td><button onclick="editEntry('${r.id}')">編集</button></td>
+          <td><button onclick="deleteEntry('${r.id}')">削除</button></td>`;
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
@@ -151,7 +169,17 @@
     });
   }
 
-  // タブ切り替え
+  async function deleteEntry(id) {
+    if (!confirm("このデータを削除しますか？")) return;
+    const supabase = window.supabaseClient;
+    await supabase.from("unit_prices").delete().eq("id", id);
+    loadHistory();
+  }
+
+  async function editEntry(id) {
+    alert("編集機能は未実装です（将来対応予定）");
+  }
+
   document.getElementById("formTab").addEventListener("click", () => {
     document.getElementById("formSection").style.display = "";
     document.getElementById("historySection").style.display = "none";
@@ -164,8 +192,12 @@
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
+    loadOptions();
     loadHistory();
   });
+
+  document.getElementById("filterItem").addEventListener("change", loadHistory);
+  document.getElementById("filterCategory").addEventListener("change", loadHistory);
 
   window.addEventListener("DOMContentLoaded", () => {
     loadOptions();
@@ -180,8 +212,8 @@
     border-radius: 6px; font-size: 1rem; min-width: 100px;
   }
   .tab-button.active { background: #007bff; color: white; }
-  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; }
-  .row input { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
+  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: wrap; }
+  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
   label { width: 30%; min-width: 80px; font-size: 1.2rem; font-weight: bold; }
   .unit-price { font-size: 1.6rem; font-weight: bold; }
   .buttons button, #submitButton {
