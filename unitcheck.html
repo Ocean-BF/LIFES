@@ -1,4 +1,4 @@
-<!-- unitcheck-v8: html/headを含まない本体のみ -->
+<!-- unitcheck-v8: 正しくCSS・JS含む完全統合版（html/head除外） -->
 <style>
   .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
   .tab-button {
@@ -41,13 +41,13 @@
     <div class="row">
       <label for="item_name">商品名</label>
       <input id="item_name" list="item_list">
-      <button type="button" onclick="toggleDropdown('item_name')">▼</button>
+      <button type="button" onclick="document.getElementById('item_name').focus()">▼</button>
       <datalist id="item_list"></datalist>
     </div>
     <div class="row">
       <label for="category">カテゴリ</label>
       <input id="category" list="category_list">
-      <button type="button" onclick="toggleDropdown('category')">▼</button>
+      <button type="button" onclick="document.getElementById('category').focus()">▼</button>
       <datalist id="category_list"></datalist>
     </div>
     <div class="row">
@@ -65,7 +65,7 @@
     <div class="row">
       <label for="shop_name">店名</label>
       <input id="shop_name" list="shop_list">
-      <button type="button" onclick="toggleDropdown('shop_name')">▼</button>
+      <button type="button" onclick="document.getElementById('shop_name').focus()">▼</button>
       <datalist id="shop_list"></datalist>
     </div>
     <div class="row">
@@ -96,10 +96,6 @@
 <script>
   const supabase = window.supabaseClient;
 
-  function toggleDropdown(field) {
-    document.getElementById(field).focus();
-  }
-
   function calcUnitPrice() {
     const price = parseFloat(document.getElementById("price").value);
     const quantity = parseFloat(document.getElementById("quantity").value || 1);
@@ -112,21 +108,21 @@
   async function loadOptions() {
     const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
     if (!data) return;
-    const unique = (arr) => [...new Set(arr.filter(Boolean))];
+    const unique = arr => [...new Set(arr.filter(Boolean))];
     const fillList = (id, values) => {
-      const list = document.getElementById(id);
-      list.innerHTML = "";
+      const el = document.getElementById(id);
+      el.innerHTML = "";
       values.forEach(v => {
         const o = document.createElement("option");
         o.value = v;
-        list.appendChild(o);
+        el.appendChild(o);
       });
     };
     fillList("item_list", unique(data.map(r => r.item_name)));
     fillList("category_list", unique(data.map(r => r.category)));
     fillList("shop_list", unique(data.map(r => r.shop_name)));
 
-    const fillFilter = (id, values) => {
+    const setFilter = (id, values) => {
       const el = document.getElementById(id);
       el.innerHTML = '<option value="">すべて</option>';
       unique(values).forEach(v => {
@@ -136,8 +132,8 @@
         el.appendChild(o);
       });
     };
-    fillFilter("filterItem", data.map(r => r.item_name));
-    fillFilter("filterCategory", data.map(r => r.category));
+    setFilter("filterItem", data.map(r => r.item_name));
+    setFilter("filterCategory", data.map(r => r.category));
   }
 
   async function loadHistory() {
