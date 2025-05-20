@@ -283,6 +283,50 @@
 </script>
 
 <style>
+  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
+  .tab-button {
+    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
+    border-radius: 6px; font-size: 1rem; min-width: 100px;
+  }
+  .tab-button.active { background: #007bff; color: white; }
+  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
+  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
+  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
+  .unit-price { font-size: 1.6rem; font-weight: bold; }
+  .buttons button, #submitButton {
+    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
+    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+  }
+  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
+  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+
+  .filter-row { flex-wrap: wrap; overflow-x: visible; }
+
+  #historyListWrapper { overflow-x: hidden; }
+
+  .table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+
+  .history-table {
+    min-width: 600px;
+    border-collapse: collapse;
+    background: white;
+    width: 100%;
+  }
+
+  .history-table th, .history-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1rem;
+    word-break: break-word;
+  }
+
+  .history-table th[colspan] {
+    background: #f2f2f2;
+    font-size: 1.1rem;
+  }
   .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
