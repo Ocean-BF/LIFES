@@ -114,11 +114,43 @@
     calcUnitPrice();
   });
 
+  const dropdownButtons = document.querySelectorAll(".dropdown-btn");
+  const modal = document.getElementById("modal");
+  const modalList = document.getElementById("modalList");
+  let currentTargetInput = null;
+
+  dropdownButtons.forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const targetId = btn.getAttribute("data-target");
+      currentTargetInput = document.getElementById(targetId);
+      const supabase = window.supabaseClient;
+      const { data } = await supabase.from("unit_prices").select(targetId);
+      const values = [...new Set(data.map(r => r[targetId]).filter(Boolean))];
+      modalList.innerHTML = "";
+      values.forEach(v => {
+        const li = document.createElement("li");
+        li.textContent = v;
+        li.style.padding = "8px";
+        li.style.cursor = "pointer";
+        li.addEventListener("click", () => {
+          currentTargetInput.value = v;
+          modal.style.display = "none";
+        });
+        modalList.appendChild(li);
+      });
+      modal.style.display = "block";
+    });
+  });
+
+  window.addEventListener("click", e => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
   document.getElementById("unitForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const unit = calcUnitPrice();
     const supabase = window.supabaseClient;
-    const { data, error } = await supabase.from("unit_prices").insert([{
+    const { error } = await supabase.from("unit_prices").insert([{
       item_name: document.getElementById("item_name").value,
       category: document.getElementById("category").value,
       price: parseFloat(priceInput.value),
@@ -141,37 +173,35 @@
   async function loadOptions() {
     const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
-    if (data) {
-      const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
-      const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
-      const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
+    if (!data) return;
+    const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
+    const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
+    const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
+    const setDatalist = (id, values) => {
+      const el = document.getElementById(id);
+      el.innerHTML = "";
+      values.forEach(v => {
+        const option = document.createElement("option");
+        option.value = v;
+        el.appendChild(option);
+      });
+    };
+    setDatalist("item_list", items);
+    setDatalist("category_list", cats);
+    setDatalist("shop_list", shops);
 
-      const setDatalist = (id, values) => {
-        const el = document.getElementById(id);
-        el.innerHTML = "";
-        values.forEach(v => {
-          const option = document.createElement("option");
-          option.value = v;
-          el.appendChild(option);
-        });
-      };
-      setDatalist("item_list", items);
-      setDatalist("category_list", cats);
-      setDatalist("shop_list", shops);
-
-      const setFilter = (id, values) => {
-        const el = document.getElementById(id);
-        el.innerHTML = '<option value="">すべて</option>';
-        values.forEach(v => {
-          const option = document.createElement("option");
-          option.value = v;
-          option.textContent = v;
-          el.appendChild(option);
-        });
-      };
-      setFilter("filterItem", items);
-      setFilter("filterCategory", cats);
-    }
+    const setFilter = (id, values) => {
+      const el = document.getElementById(id);
+      el.innerHTML = '<option value="">すべて</option>';
+      values.forEach(v => {
+        const option = document.createElement("option");
+        option.value = v;
+        option.textContent = v;
+        el.appendChild(option);
+      });
+    };
+    setFilter("filterItem", items);
+    setFilter("filterCategory", cats);
   }
 
   async function loadHistory() {
@@ -182,26 +212,22 @@
       container.textContent = "履歴の取得に失敗しました。";
       return;
     }
-
     const filterItem = document.getElementById("filterItem").value;
     const filterCategory = document.getElementById("filterCategory").value;
     const filtered = data.filter(r =>
       (!filterItem || r.item_name === filterItem) &&
       (!filterCategory || r.category === filterCategory)
     );
-
     if (filtered.length === 0) {
       container.textContent = "登録された履歴がありません。";
       return;
     }
-
     const grouped = {};
     filtered.forEach(row => {
       if (!row.item_name) return;
       if (!grouped[row.item_name]) grouped[row.item_name] = [];
       grouped[row.item_name].push(row);
     });
-
     container.innerHTML = "";
     Object.entries(grouped).forEach(([item, rows]) => {
       const wrapper = document.createElement("div");
@@ -210,8 +236,8 @@
       table.className = "history-table";
       table.innerHTML = `
         <thead>
-          <tr><th colspan="4">${item}</th></tr>
-          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>
+          <tr><th colspan="6">${item}</th></tr>
+          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>編集</th><th>削除</th></tr>
         </thead>`;
       const tbody = document.createElement("tbody");
       rows.sort((a, b) => a.unit_price - b.unit_price);
@@ -221,7 +247,9 @@
           <td>${r.category || ""}</td>
           <td>${r.shop_name || ""}</td>
           <td>${r.unit_price?.toFixed(1)}</td>
-          <td>${r.created_at?.split("T")[0]}</td>`;
+          <td>${r.created_at?.split("T")[0]}</td>
+          <td><button class="edit-btn">編集</button></td>
+          <td><button class="delete-btn">削除</button></td>`;
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
@@ -248,7 +276,6 @@
 
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
-
   window.addEventListener("DOMContentLoaded", () => {
     loadOptions();
     calcUnitPrice();
@@ -256,48 +283,27 @@
 </script>
 
 <style>
-  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
-  .tab-button {
-    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
-    border-radius: 6px; font-size: 1rem; min-width: 100px;
+  .modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
   }
-  .tab-button.active { background: #007bff; color: white; }
-  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
-  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
-  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
-  .unit-price { font-size: 1.6rem; font-weight: bold; }
-  .buttons button, #submitButton {
-    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
-    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+  .modal-content {
+    background: white; padding: 10px; border-radius: 8px; max-height: 60vh; overflow-y: auto; width: 80%;
   }
-  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
-  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
-
-  .filter-row { flex-wrap: wrap; overflow-x: visible; }
-
-  #historyListWrapper { overflow-x: hidden; }
-
-  .table-wrapper {
-    overflow-x: auto;
-    margin-bottom: 20px;
-  }
-
   .history-table {
-    min-width: 600px;
-    border-collapse: collapse;
-    background: white;
+    table-layout: fixed;
     width: 100%;
   }
-
-  .history-table th, .history-table td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    font-size: 1rem;
-    word-break: break-word;
-  }
-
-  .history-table th[colspan] {
-    background: #f2f2f2;
-    font-size: 1.1rem;
-  }
+  .history-table th:nth-child(1),
+  .history-table td:nth-child(1) { width: 20%; }
+  .history-table th:nth-child(2),
+  .history-table td:nth-child(2) { width: 20%; }
+  .history-table th:nth-child(3),
+  .history-table td:nth-child(3) { width: 15%; }
+  .history-table th:nth-child(4),
+  .history-table td:nth-child(4) { width: 15%; }
+  .history-table th:nth-child(5),
+  .history-table td:nth-child(5),
+  .history-table th:nth-child(6),
+  .history-table td:nth-child(6) { width: 15%; text-align: center; }
 </style>
