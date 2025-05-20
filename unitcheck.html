@@ -1,7 +1,6 @@
-<!-- unitcheck-v8: v7順序完全準拠＋編集・削除機能 -->
-<!-- ✅ 構成順保持：HTML構造 → スクリプト → スタイル -->
+<!-- unitcheck-v8.2 FINAL -->
 
-<!-- HTML構造（フォームと履歴） -->
+<!-- HTML構造 -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -9,233 +8,254 @@
 
 <div id="formSection" class="section">
   <form id="unitForm">
-    <div class="row"><label>商品名</label><input id="item_name" list="item_list" required><datalist id="item_list"></datalist></div>
-    <div class="row"><label>カテゴリ</label><input id="category" list="category_list"><datalist id="category_list"></datalist></div>
-    <div class="row"><label>価格</label><input id="price" required></div>
-    <div class="row"><label>数量</label><input id="quantity" value="1" required></div>
-    <div class="row"><label>内容量</label><input id="volume" value="1" required></div>
-    <div class="row"><label>店名</label><input id="shop_name" list="shop_list"><datalist id="shop_list"></datalist></div>
-    <div class="row"><label>単価</label><div id="unitPriceDisplay" class="unit-price">-- 円</div></div>
+    <div class="row">
+      <label>商品名</label>
+      <input id="item_name" required><button type="button" onclick="showList(this, 'item_name')">▼</button>
+    </div>
+    <div class="row">
+      <label>カテゴリ</label>
+      <input id="category"><button type="button" onclick="showList(this, 'category')">▼</button>
+    </div>
+    <div class="row">
+      <label>価格</label>
+      <input id="price" required>
+    </div>
+    <div class="row">
+      <label>数量</label>
+      <input id="quantity" value="1">
+    </div>
+    <div class="row">
+      <label>内容量</label>
+      <input id="volume" value="1">
+    </div>
+    <div class="row">
+      <label>店名</label>
+      <input id="shop_name"><button type="button" onclick="showList(this, 'shop_name')">▼</button>
+    </div>
+    <div class="row">
+      <label>単価</label>
+      <div id="unitPriceDisplay" class="unit-price">-- 円</div>
+    </div>
     <div class="row buttons">
       <button type="button" id="taxIn">税込価格にする</button>
       <button type="button" id="taxOut">税抜価格にする</button>
     </div>
-    <div class="row"><button type="submit" id="submitButton">登録する</button></div>
+    <div class="row">
+      <button type="submit" id="submitButton">登録する</button>
+    </div>
     <div id="status" class="status"></div>
   </form>
 </div>
 
 <div id="historySection" class="section" style="display:none;">
   <div class="row filter-row">
-    <label>商品名</label><select id="filterItem"><option value="">すべて</option></select>
-    <label>カテゴリ</label><select id="filterCategory"><option value="">すべて</option></select>
+    <label>商品名</label>
+    <select id="filterItem"><option value="">すべて</option></select>
+    <label>カテゴリ</label>
+    <select id="filterCategory"><option value="">すべて</option></select>
   </div>
   <div id="historyListWrapper">
     <div id="historyList">履歴を読み込み中...</div>
   </div>
 </div>
 
-<!-- スクリプト（JS機能） -->
+<div id="modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <p>このデータを削除しますか？</p>
+    <div class="modal-buttons">
+      <button id="confirmDelete">削除する</button>
+      <button onclick="closeModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
 <script>
-  const priceInput = document.getElementById("price");
-  const quantityInput = document.getElementById("quantity");
-  const volumeInput = document.getElementById("volume");
-  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
-  const status = document.getElementById("status");
+let deleteTargetId = null;
 
-  function calcUnitPrice() {
-    const price = parseFloat(priceInput.value);
-    const quantity = parseFloat(quantityInput.value || 1);
-    const volume = parseFloat(volumeInput.value || 1);
-    if (!isNaN(price) && quantity > 0 && volume > 0) {
-      const unit = price / quantity / volume;
-      unitPriceDisplay.textContent = `単価：${unit.toFixed(1)} 円`;
-      return unit;
-    }
-    unitPriceDisplay.textContent = "単価：-- 円";
-    return null;
-  }
+function showList(button, field) {
+  const input = document.getElementById(field);
+  const list = lists[field];
+  if (!list || list.length === 0) return;
 
-  priceInput.addEventListener("input", calcUnitPrice);
-  quantityInput.addEventListener("input", calcUnitPrice);
-  volumeInput.addEventListener("input", calcUnitPrice);
+  const dropdown = document.createElement("select");
+  dropdown.innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join("");
+  dropdown.onchange = () => {
+    input.value = dropdown.value;
+    dropdown.remove();
+  };
+  button.parentNode.appendChild(dropdown);
+}
 
-  document.getElementById("taxIn").addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
-    calcUnitPrice();
-  });
+function calcUnitPrice() {
+  const price = parseFloat(document.getElementById("price").value);
+  const quantity = parseFloat(document.getElementById("quantity").value || 1);
+  const volume = parseFloat(document.getElementById("volume").value || 1);
+  const unit = price / quantity / volume;
+  document.getElementById("unitPriceDisplay").textContent = isFinite(unit) ? `単価：${unit.toFixed(1)} 円` : "単価：-- 円";
+  return isFinite(unit) ? unit : null;
+}
 
-  document.getElementById("taxOut").addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
-    calcUnitPrice();
-  });
-
-  document.getElementById("unitForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const unit = calcUnitPrice();
-    const supabase = window.supabaseClient;
-    const { error } = await supabase.from("unit_prices").insert([{
-      item_name: document.getElementById("item_name").value,
-      category: document.getElementById("category").value,
-      price: parseFloat(priceInput.value),
-      quantity: parseFloat(quantityInput.value),
-      volume: parseFloat(volumeInput.value),
-      unit_price: unit,
-      shop_name: document.getElementById("shop_name").value
-    }]);
-    status.textContent = error ? "登録に失敗しました：" + error.message : "登録しました。";
-    if (!error) {
-      document.getElementById("unitForm").reset();
-      calcUnitPrice();
-      loadOptions();
-      loadHistory();
-    }
-  });
-
-  async function loadOptions() {
-    const supabase = window.supabaseClient;
-    const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
-    if (data) {
-      const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
-      const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
-      const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
-      const setDatalist = (id, values) => {
-        const el = document.getElementById(id);
-        el.innerHTML = "";
-        values.forEach(v => {
-          const option = document.createElement("option");
-          option.value = v;
-          el.appendChild(option);
-        });
-      };
-      setDatalist("item_list", items);
-      setDatalist("category_list", cats);
-      setDatalist("shop_list", shops);
-
-      const setFilter = (id, values) => {
-        const el = document.getElementById(id);
-        el.innerHTML = '<option value="">すべて</option>';
-        values.forEach(v => {
-          const option = document.createElement("option");
-          option.value = v;
-          option.textContent = v;
-          el.appendChild(option);
-        });
-      };
-      setFilter("filterItem", items);
-      setFilter("filterCategory", cats);
-    }
-  }
-
-  async function loadHistory() {
-    const supabase = window.supabaseClient;
-    const { data } = await supabase.from("unit_prices").select("*");
-    const container = document.getElementById("historyList");
-    if (!data) return container.textContent = "取得失敗";
-
-    const filterItem = document.getElementById("filterItem").value;
-    const filterCategory = document.getElementById("filterCategory").value;
-    const filtered = data.filter(r =>
-      (!filterItem || r.item_name === filterItem) &&
-      (!filterCategory || r.category === filterCategory)
-    );
-
-    const grouped = {};
-    filtered.forEach(row => {
-      if (!row.item_name) return;
-      if (!grouped[row.item_name]) grouped[row.item_name] = [];
-      grouped[row.item_name].push(row);
+async function loadOptions() {
+  const { data } = await window.supabaseClient.from("unit_prices").select("item_name, category, shop_name");
+  lists = {
+    item_name: [...new Set(data.map(r => r.item_name).filter(Boolean))],
+    category: [...new Set(data.map(r => r.category).filter(Boolean))],
+    shop_name: [...new Set(data.map(r => r.shop_name).filter(Boolean))]
+  };
+  const fillFilter = (id, values) => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<option value="">すべて</option>';
+    values.forEach(v => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      el.appendChild(o);
     });
+  };
+  fillFilter("filterItem", lists.item_name);
+  fillFilter("filterCategory", lists.category);
+}
 
-    container.innerHTML = "";
-    Object.entries(grouped).forEach(([item, rows]) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "table-wrapper";
-      const table = document.createElement("table");
-      table.className = "history-table";
-      table.innerHTML = `
-        <thead>
-          <tr><th colspan="6">${item}</th></tr>
-          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>編集</th><th>削除</th></tr>
-        </thead>`;
-      const tbody = document.createElement("tbody");
-      rows.sort((a, b) => a.unit_price - b.unit_price);
-      rows.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r.category || ""}</td>
-          <td>${r.shop_name || ""}</td>
-          <td>${r.unit_price?.toFixed(1)}</td>
-          <td>${r.created_at?.split("T")[0]}</td>
-          <td><button onclick="editRow(this, '${r.id}')">編集</button></td>
-          <td><button onclick="deleteRow('${r.id}')">削除</button></td>`;
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      wrapper.appendChild(table);
-      container.appendChild(wrapper);
-    });
-  }
-
-  async function editRow(btn, id) {
-    const tr = btn.closest("tr");
-    const [cat, shop, unit, date] = [...tr.children].slice(0, 4).map(td => td.textContent);
-    tr.innerHTML = `
-      <td><input value="${cat}"></td>
-      <td><input value="${shop}"></td>
-      <td><input value="${unit}"></td>
-      <td>${date}</td>
-      <td><button onclick="saveRow(this, '${id}')">保存</button></td>
-      <td><button onclick="loadHistory()">キャンセル</button></td>`;
-  }
-
-  async function saveRow(btn, id) {
-    const tr = btn.closest("tr");
-    const [cat, shop, unit] = [...tr.querySelectorAll("input")].map(i => i.value);
-    const supabase = window.supabaseClient;
-    await supabase.from("unit_prices").update({
-      category: cat,
-      shop_name: shop,
-      unit_price: parseFloat(unit)
-    }).eq("id", id);
-    loadHistory();
-  }
-
-  async function deleteRow(id) {
-    const supabase = window.supabaseClient;
-    if (!confirm("削除してもよろしいですか？")) return;
-    await supabase.from("unit_prices").delete().eq("id", id);
-    loadHistory();
-  }
-
-  document.getElementById("formTab").addEventListener("click", () => {
-    document.getElementById("formSection").style.display = "";
-    document.getElementById("historySection").style.display = "none";
-    document.getElementById("formTab").classList.add("active");
-    document.getElementById("historyTab").classList.remove("active");
+async function loadHistory() {
+  const { data } = await window.supabaseClient.from("unit_prices").select("*");
+  const filterItem = document.getElementById("filterItem").value;
+  const filterCategory = document.getElementById("filterCategory").value;
+  const filtered = data.filter(r =>
+    (!filterItem || r.item_name === filterItem) &&
+    (!filterCategory || r.category === filterCategory)
+  );
+  const grouped = {};
+  filtered.forEach(row => {
+    if (!row.item_name) return;
+    if (!grouped[row.item_name]) grouped[row.item_name] = [];
+    grouped[row.item_name].push(row);
   });
 
-  document.getElementById("historyTab").addEventListener("click", () => {
-    document.getElementById("formSection").style.display = "none";
-    document.getElementById("historySection").style.display = "";
-    document.getElementById("formTab").classList.remove("active");
-    document.getElementById("historyTab").classList.add("active");
+  const container = document.getElementById("historyList");
+  container.innerHTML = "";
+  Object.entries(grouped).forEach(([item, rows]) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-wrapper";
+    const table = document.createElement("table");
+    table.className = "history-table";
+    table.innerHTML = `
+      <thead>
+        <tr><th colspan="6">${item}</th></tr>
+        <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>編集</th><th>削除</th></tr>
+      </thead>`;
+    const tbody = document.createElement("tbody");
+    rows.sort((a, b) => a.unit_price - b.unit_price);
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.category || ""}</td>
+        <td>${r.shop_name || ""}</td>
+        <td>${r.unit_price?.toFixed(1)}</td>
+        <td>${r.created_at?.split("T")[0]}</td>
+        <td><button onclick="editRow(this, '${r.id}')">編集</button></td>
+        <td><button onclick="openModal('${r.id}')">削除</button></td>`;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    container.appendChild(wrapper);
+  });
+}
+
+function editRow(btn, id) {
+  const tr = btn.closest("tr");
+  const [cat, shop, unit, date] = [...tr.children].slice(0, 4).map(td => td.textContent);
+  tr.innerHTML = `
+    <td><input value="${cat}"></td>
+    <td><input value="${shop}"></td>
+    <td><input value="${unit}"></td>
+    <td>${date}</td>
+    <td><button onclick="saveRow(this, '${id}')">保存</button></td>
+    <td><button onclick="loadHistory()">キャンセル</button></td>`;
+}
+
+async function saveRow(btn, id) {
+  const tr = btn.closest("tr");
+  const [cat, shop, unit] = [...tr.querySelectorAll("input")].map(i => i.value);
+  await window.supabaseClient.from("unit_prices").update({
+    category: cat,
+    shop_name: shop,
+    unit_price: parseFloat(unit)
+  }).eq("id", id);
+  loadHistory();
+}
+
+function openModal(id) {
+  deleteTargetId = id;
+  document.getElementById("modal").style.display = "block";
+}
+function closeModal() {
+  deleteTargetId = null;
+  document.getElementById("modal").style.display = "none";
+}
+document.getElementById("confirmDelete").onclick = async () => {
+  if (!deleteTargetId) return;
+  await window.supabaseClient.from("unit_prices").delete().eq("id", deleteTargetId);
+  closeModal();
+  loadHistory();
+};
+
+document.getElementById("unitForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const unit = calcUnitPrice();
+  const { error } = await window.supabaseClient.from("unit_prices").insert([{
+    item_name: document.getElementById("item_name").value,
+    category: document.getElementById("category").value,
+    price: parseFloat(document.getElementById("price").value),
+    quantity: parseFloat(document.getElementById("quantity").value),
+    volume: parseFloat(document.getElementById("volume").value),
+    unit_price: unit,
+    shop_name: document.getElementById("shop_name").value
+  }]);
+  document.getElementById("status").textContent = error ? "登録に失敗しました" : "登録しました";
+  if (!error) {
+    document.getElementById("unitForm").reset();
+    calcUnitPrice();
     loadOptions();
     loadHistory();
-  });
+  }
+});
 
-  document.getElementById("filterItem").addEventListener("change", loadHistory);
-  document.getElementById("filterCategory").addEventListener("change", loadHistory);
-
-  window.addEventListener("DOMContentLoaded", () => {
-    loadOptions();
-    calcUnitPrice();
-  });
+document.getElementById("formTab").onclick = () => {
+  document.getElementById("formSection").style.display = "";
+  document.getElementById("historySection").style.display = "none";
+  document.getElementById("formTab").classList.add("active");
+  document.getElementById("historyTab").classList.remove("active");
+};
+document.getElementById("historyTab").onclick = () => {
+  document.getElementById("formSection").style.display = "none";
+  document.getElementById("historySection").style.display = "";
+  document.getElementById("formTab").classList.remove("active");
+  document.getElementById("historyTab").classList.add("active");
+  loadOptions();
+  loadHistory();
+};
+document.getElementById("taxIn").onclick = () => {
+  const val = parseFloat(document.getElementById("price").value);
+  if (!isNaN(val)) document.getElementById("price").value = Math.round(val * 1.1);
+  calcUnitPrice();
+};
+document.getElementById("taxOut").onclick = () => {
+  const val = parseFloat(document.getElementById("price").value);
+  if (!isNaN(val)) document.getElementById("price").value = Math.round(val / 1.1);
+  calcUnitPrice();
+};
+document.getElementById("filterItem").onchange = loadHistory;
+document.getElementById("filterCategory").onchange = loadHistory;
+window.addEventListener("DOMContentLoaded", () => {
+  loadOptions();
+  loadHistory();
+  calcUnitPrice();
+});
 </script>
 
-<!-- CSS（構造を保ったまま最終に配置） -->
+<!-- CSS -->
 <style>
   .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
   .tab-button {
@@ -256,16 +276,36 @@
 
   .filter-row { flex-wrap: wrap; overflow-x: visible; }
   #historyListWrapper { overflow-x: hidden; }
-
   .table-wrapper { overflow-x: auto; margin-bottom: 20px; }
+
   .history-table {
-    min-width: 700px; border-collapse: collapse; background: white; width: 100%;
+    width: max-content;
+    table-layout: fixed;
+    background: white;
+    border-collapse: collapse;
   }
   .history-table th, .history-table td {
-    border: 1px solid #ccc; padding: 6px; font-size: 1rem;
-    word-break: break-word; text-align: left;
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1rem;
+    text-align: left;
+    min-width: 120px;
+    max-width: 200px;
+    white-space: normal;
   }
   .history-table th[colspan] {
-    background: #f2f2f2; font-size: 1.1rem;
+    background: #f2f2f2;
+    font-size: 1.1rem;
+  }
+
+  .modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+  }
+  .modal-content {
+    background: white; padding: 20px; border-radius: 6px; text-align: center;
+  }
+  .modal-buttons button {
+    margin: 10px; padding: 8px 16px; font-size: 1rem;
   }
 </style>
