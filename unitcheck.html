@@ -1,19 +1,26 @@
-<!-- unitcheck-v7: 自由入力＋候補選択対応・表スクロール制御・表幅統一 -->
+<!-- unitcheck-v9: 完全修正版 -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
 </div>
 
+<!-- 入力フォーム -->
 <div id="formSection" class="section">
   <form id="unitForm">
     <div class="row">
       <label for="item_name">商品名</label>
-      <input list="item_list" id="item_name" name="item_name" required>
+      <div class="input-combo">
+        <input list="item_list" id="item_name" name="item_name" required>
+        <button type="button" class="dropdown-btn" data-target="item_name">▼</button>
+      </div>
       <datalist id="item_list"></datalist>
     </div>
     <div class="row">
       <label for="category">カテゴリ</label>
-      <input list="category_list" id="category" name="category">
+      <div class="input-combo">
+        <input list="category_list" id="category" name="category">
+        <button type="button" class="dropdown-btn" data-target="category">▼</button>
+      </div>
       <datalist id="category_list"></datalist>
     </div>
     <div class="row">
@@ -30,7 +37,10 @@
     </div>
     <div class="row">
       <label for="shop_name">店名</label>
-      <input list="shop_list" id="shop_name" name="shop_name">
+      <div class="input-combo">
+        <input list="shop_list" id="shop_name" name="shop_name">
+        <button type="button" class="dropdown-btn" data-target="shop_name">▼</button>
+      </div>
       <datalist id="shop_list"></datalist>
     </div>
     <div class="row">
@@ -46,6 +56,7 @@
   </form>
 </div>
 
+<!-- 履歴 -->
 <div id="historySection" class="section" style="display:none;">
   <div class="row filter-row">
     <label>商品名</label>
@@ -57,6 +68,15 @@
     <div id="historyList">履歴を読み込み中...</div>
   </div>
 </div>
+
+<!-- モーダル -->
+<div id="modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <ul id="modalList"></ul>
+  </div>
+</div>
+
+<!-- スクリプト & スタイルは省略。別処理で挿入可能。 -->
 
 <script>
   const priceInput = document.getElementById("price");
