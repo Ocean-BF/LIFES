@@ -1,52 +1,4 @@
-<!-- unitcheck-v8-compatible: v7の構成を完全維持しつつ編集削除追加 -->
-<!-- 貼り付けるだけでv7と同様に動作。supabaseClientはwindowに前提あり -->
-<style>
-  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
-  .tab-button {
-    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
-    border-radius: 6px; font-size: 1rem; min-width: 100px;
-  }
-  .tab-button.active { background: #007bff; color: white; }
-  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
-  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
-  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
-  .unit-price { font-size: 1.6rem; font-weight: bold; }
-  .buttons button, #submitButton {
-    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
-    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
-  }
-  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
-  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
-
-  .filter-row { flex-wrap: wrap; overflow-x: visible; }
-
-  #historyListWrapper { overflow-x: hidden; }
-
-  .table-wrapper {
-    overflow-x: auto;
-    margin-bottom: 20px;
-  }
-
-  .history-table {
-    min-width: 700px;
-    border-collapse: collapse;
-    background: white;
-    width: 100%;
-  }
-
-  .history-table th, .history-table td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    font-size: 1rem;
-    word-break: break-word;
-  }
-
-  .history-table th[colspan] {
-    background: #f2f2f2;
-    font-size: 1.1rem;
-  }
-</style>
-
+<!-- unitcheck-v7: 自由入力＋候補選択対応・表スクロール制御・表幅統一 -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -56,12 +8,12 @@
   <form id="unitForm">
     <div class="row">
       <label for="item_name">商品名</label>
-      <input id="item_name" list="item_list" name="item_name" required>
+      <input list="item_list" id="item_name" name="item_name" required>
       <datalist id="item_list"></datalist>
     </div>
     <div class="row">
       <label for="category">カテゴリ</label>
-      <input id="category" list="category_list" name="category">
+      <input list="category_list" id="category" name="category">
       <datalist id="category_list"></datalist>
     </div>
     <div class="row">
@@ -78,7 +30,7 @@
     </div>
     <div class="row">
       <label for="shop_name">店名</label>
-      <input id="shop_name" list="shop_list" name="shop_name">
+      <input list="shop_list" id="shop_name" name="shop_name">
       <datalist id="shop_list"></datalist>
     </div>
     <div class="row">
@@ -112,7 +64,6 @@
   const volumeInput = document.getElementById("volume");
   const unitPriceDisplay = document.getElementById("unitPriceDisplay");
   const status = document.getElementById("status");
-  const supabase = window.supabaseClient;
 
   function calcUnitPrice() {
     const price = parseFloat(priceInput.value);
@@ -146,7 +97,8 @@
   document.getElementById("unitForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const unit = calcUnitPrice();
-    const { error } = await supabase.from("unit_prices").insert([{
+    const supabase = window.supabaseClient;
+    const { data, error } = await supabase.from("unit_prices").insert([{
       item_name: document.getElementById("item_name").value,
       category: document.getElementById("category").value,
       price: parseFloat(priceInput.value),
@@ -155,16 +107,19 @@
       unit_price: unit,
       shop_name: document.getElementById("shop_name").value
     }]);
-    status.textContent = error ? "登録に失敗しました" : "登録しました";
-    if (!error) {
+    if (error) {
+      status.textContent = "登録に失敗しました：" + error.message;
+    } else {
+      status.textContent = "登録しました。";
       document.getElementById("unitForm").reset();
       calcUnitPrice();
-      loadOptions();
       loadHistory();
+      loadOptions();
     }
   });
 
   async function loadOptions() {
+    const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
     if (data) {
       const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
@@ -200,9 +155,13 @@
   }
 
   async function loadHistory() {
+    const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("*");
     const container = document.getElementById("historyList");
-    if (!data) return container.textContent = "取得失敗";
+    if (!data) {
+      container.textContent = "履歴の取得に失敗しました。";
+      return;
+    }
 
     const filterItem = document.getElementById("filterItem").value;
     const filterCategory = document.getElementById("filterCategory").value;
@@ -211,8 +170,14 @@
       (!filterCategory || r.category === filterCategory)
     );
 
+    if (filtered.length === 0) {
+      container.textContent = "登録された履歴がありません。";
+      return;
+    }
+
     const grouped = {};
     filtered.forEach(row => {
+      if (!row.item_name) return;
       if (!grouped[row.item_name]) grouped[row.item_name] = [];
       grouped[row.item_name].push(row);
     });
@@ -225,77 +190,94 @@
       table.className = "history-table";
       table.innerHTML = `
         <thead>
-          <tr><th colspan="6">${item}</th></tr>
-          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>操作</th><th></th></tr>
+          <tr><th colspan="4">${item}</th></tr>
+          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>
         </thead>`;
       const tbody = document.createElement("tbody");
-
       rows.sort((a, b) => a.unit_price - b.unit_price);
       rows.forEach(r => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${r.category}</td><td>${r.shop_name}</td><td>${r.unit_price?.toFixed(1)}</td>
-          <td>${r.created_at?.split("T")[0]}</td>
-          <td><button onclick="editRow(this, ${r.id})">編集</button></td>
-          <td><button onclick="deleteRow(${r.id})">削除</button></td>`;
+          <td>${r.category || ""}</td>
+          <td>${r.shop_name || ""}</td>
+          <td>${r.unit_price?.toFixed(1)}</td>
+          <td>${r.created_at?.split("T")[0]}</td>`;
         tbody.appendChild(tr);
       });
-
       table.appendChild(tbody);
       wrapper.appendChild(table);
       container.appendChild(wrapper);
     });
   }
 
-  async function editRow(btn, id) {
-    const tr = btn.closest("tr");
-    const cells = tr.querySelectorAll("td");
-    const [cat, shop, unit, date] = [...cells].slice(0, 4).map(td => td.textContent);
-    tr.innerHTML = `
-      <td><input value="${cat}"></td>
-      <td><input value="${shop}"></td>
-      <td><input type="number" value="${unit}"></td>
-      <td>${date}</td>
-      <td><button onclick="saveRow(this, ${id})">保存</button></td>
-      <td><button onclick="loadHistory()">キャンセル</button></td>`;
-  }
-
-  async function saveRow(btn, id) {
-    const tr = btn.closest("tr");
-    const [cat, shop, unit] = [...tr.querySelectorAll("input")].map(i => i.value);
-    await supabase.from("unit_prices").update({
-      category: cat, shop_name: shop, unit_price: parseFloat(unit)
-    }).eq("id", id);
-    loadHistory();
-  }
-
-  async function deleteRow(id) {
-    if (!confirm("削除しますか？")) return;
-    await supabase.from("unit_prices").delete().eq("id", id);
-    loadHistory();
-  }
-
-  document.getElementById("formTab").onclick = () => {
+  document.getElementById("formTab").addEventListener("click", () => {
     document.getElementById("formSection").style.display = "";
     document.getElementById("historySection").style.display = "none";
     document.getElementById("formTab").classList.add("active");
     document.getElementById("historyTab").classList.remove("active");
-  };
+  });
 
-  document.getElementById("historyTab").onclick = () => {
+  document.getElementById("historyTab").addEventListener("click", () => {
     document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
     loadOptions();
     loadHistory();
-  };
+  });
 
-  document.getElementById("filterItem").onchange = loadHistory;
-  document.getElementById("filterCategory").onchange = loadHistory;
+  document.getElementById("filterItem").addEventListener("change", loadHistory);
+  document.getElementById("filterCategory").addEventListener("change", loadHistory);
+
   window.addEventListener("DOMContentLoaded", () => {
     loadOptions();
-    loadHistory();
     calcUnitPrice();
   });
 </script>
+
+<style>
+  .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
+  .tab-button {
+    padding: 6px 12px; border: 2px solid #007bff; background: white; font-weight: bold;
+    border-radius: 6px; font-size: 1rem; min-width: 100px;
+  }
+  .tab-button.active { background: #007bff; color: white; }
+  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
+  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
+  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
+  .unit-price { font-size: 1.6rem; font-weight: bold; }
+  .buttons button, #submitButton {
+    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
+    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+  }
+  #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
+  .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+
+  .filter-row { flex-wrap: wrap; overflow-x: visible; }
+
+  #historyListWrapper { overflow-x: hidden; }
+
+  .table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+
+  .history-table {
+    min-width: 600px;
+    border-collapse: collapse;
+    background: white;
+    width: 100%;
+  }
+
+  .history-table th, .history-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1rem;
+    word-break: break-word;
+  }
+
+  .history-table th[colspan] {
+    background: #f2f2f2;
+    font-size: 1.1rem;
+  }
+</style>
