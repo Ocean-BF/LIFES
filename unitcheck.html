@@ -1,4 +1,5 @@
-<!-- unitcheck-v8: 正しくCSS・JS含む完全統合版（html/head除外） -->
+<!-- unitcheck-v8-compatible: v7の構成を完全維持しつつ編集削除追加 -->
+<!-- 貼り付けるだけでv7と同様に動作。supabaseClientはwindowに前提あり -->
 <style>
   .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
   .tab-button {
@@ -7,27 +8,42 @@
   }
   .tab-button.active { background: #007bff; color: white; }
   .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
-  .row input, .row select { flex: 1; font-size: 1.1rem; padding: 4px 8px; font-weight: bold; }
-  label { width: 30%; min-width: 100px; font-size: 1rem; font-weight: bold; }
-  .unit-price { font-size: 1.4rem; font-weight: bold; }
+  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
+  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
+  .unit-price { font-size: 1.6rem; font-weight: bold; }
   .buttons button, #submitButton {
     padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
     font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
   }
   #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
   .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
+
   .filter-row { flex-wrap: wrap; overflow-x: visible; }
+
   #historyListWrapper { overflow-x: hidden; }
-  .table-wrapper { overflow-x: auto; margin-bottom: 20px; }
+
+  .table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+
   .history-table {
-    min-width: 700px; border-collapse: collapse; background: white; width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+    background: white;
+    width: 100%;
   }
+
   .history-table th, .history-table td {
-    border: 1px solid #ccc; padding: 6px; font-size: 0.9rem;
-    word-break: break-word; text-align: left;
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1rem;
+    word-break: break-word;
   }
+
   .history-table th[colspan] {
-    background: #f2f2f2; font-size: 1rem;
+    background: #f2f2f2;
+    font-size: 1.1rem;
   }
 </style>
 
@@ -40,14 +56,12 @@
   <form id="unitForm">
     <div class="row">
       <label for="item_name">商品名</label>
-      <input id="item_name" list="item_list">
-      <button type="button" onclick="document.getElementById('item_name').focus()">▼</button>
+      <input id="item_name" list="item_list" name="item_name" required>
       <datalist id="item_list"></datalist>
     </div>
     <div class="row">
       <label for="category">カテゴリ</label>
-      <input id="category" list="category_list">
-      <button type="button" onclick="document.getElementById('category').focus()">▼</button>
+      <input id="category" list="category_list" name="category">
       <datalist id="category_list"></datalist>
     </div>
     <div class="row">
@@ -64,8 +78,7 @@
     </div>
     <div class="row">
       <label for="shop_name">店名</label>
-      <input id="shop_name" list="shop_list">
-      <button type="button" onclick="document.getElementById('shop_name').focus()">▼</button>
+      <input id="shop_name" list="shop_list" name="shop_name">
       <datalist id="shop_list"></datalist>
     </div>
     <div class="row">
@@ -94,46 +107,96 @@
 </div>
 
 <script>
+  const priceInput = document.getElementById("price");
+  const quantityInput = document.getElementById("quantity");
+  const volumeInput = document.getElementById("volume");
+  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
+  const status = document.getElementById("status");
   const supabase = window.supabaseClient;
 
   function calcUnitPrice() {
-    const price = parseFloat(document.getElementById("price").value);
-    const quantity = parseFloat(document.getElementById("quantity").value || 1);
-    const volume = parseFloat(document.getElementById("volume").value || 1);
-    const unit = price / quantity / volume;
-    document.getElementById("unitPriceDisplay").textContent = isFinite(unit) ? `単価：${unit.toFixed(1)} 円` : "単価：-- 円";
-    return isFinite(unit) ? unit : null;
+    const price = parseFloat(priceInput.value);
+    const quantity = parseFloat(quantityInput.value || 1);
+    const volume = parseFloat(volumeInput.value || 1);
+    if (!isNaN(price) && quantity > 0 && volume > 0) {
+      const unit = price / quantity / volume;
+      unitPriceDisplay.textContent = `単価：${unit.toFixed(1)} 円`;
+      return unit;
+    }
+    unitPriceDisplay.textContent = "単価：-- 円";
+    return null;
   }
+
+  priceInput.addEventListener("input", calcUnitPrice);
+  quantityInput.addEventListener("input", calcUnitPrice);
+  volumeInput.addEventListener("input", calcUnitPrice);
+
+  document.getElementById("taxIn").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
+    calcUnitPrice();
+  });
+
+  document.getElementById("taxOut").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
+    calcUnitPrice();
+  });
+
+  document.getElementById("unitForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const unit = calcUnitPrice();
+    const { error } = await supabase.from("unit_prices").insert([{
+      item_name: document.getElementById("item_name").value,
+      category: document.getElementById("category").value,
+      price: parseFloat(priceInput.value),
+      quantity: parseFloat(quantityInput.value),
+      volume: parseFloat(volumeInput.value),
+      unit_price: unit,
+      shop_name: document.getElementById("shop_name").value
+    }]);
+    status.textContent = error ? "登録に失敗しました" : "登録しました";
+    if (!error) {
+      document.getElementById("unitForm").reset();
+      calcUnitPrice();
+      loadOptions();
+      loadHistory();
+    }
+  });
 
   async function loadOptions() {
     const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
-    if (!data) return;
-    const unique = arr => [...new Set(arr.filter(Boolean))];
-    const fillList = (id, values) => {
-      const el = document.getElementById(id);
-      el.innerHTML = "";
-      values.forEach(v => {
-        const o = document.createElement("option");
-        o.value = v;
-        el.appendChild(o);
-      });
-    };
-    fillList("item_list", unique(data.map(r => r.item_name)));
-    fillList("category_list", unique(data.map(r => r.category)));
-    fillList("shop_list", unique(data.map(r => r.shop_name)));
+    if (data) {
+      const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
+      const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
+      const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
 
-    const setFilter = (id, values) => {
-      const el = document.getElementById(id);
-      el.innerHTML = '<option value="">すべて</option>';
-      unique(values).forEach(v => {
-        const o = document.createElement("option");
-        o.value = v;
-        o.textContent = v;
-        el.appendChild(o);
-      });
-    };
-    setFilter("filterItem", data.map(r => r.item_name));
-    setFilter("filterCategory", data.map(r => r.category));
+      const setDatalist = (id, values) => {
+        const el = document.getElementById(id);
+        el.innerHTML = "";
+        values.forEach(v => {
+          const option = document.createElement("option");
+          option.value = v;
+          el.appendChild(option);
+        });
+      };
+      setDatalist("item_list", items);
+      setDatalist("category_list", cats);
+      setDatalist("shop_list", shops);
+
+      const setFilter = (id, values) => {
+        const el = document.getElementById(id);
+        el.innerHTML = '<option value="">すべて</option>';
+        values.forEach(v => {
+          const option = document.createElement("option");
+          option.value = v;
+          option.textContent = v;
+          el.appendChild(option);
+        });
+      };
+      setFilter("filterItem", items);
+      setFilter("filterCategory", cats);
+    }
   }
 
   async function loadHistory() {
@@ -141,11 +204,11 @@
     const container = document.getElementById("historyList");
     if (!data) return container.textContent = "取得失敗";
 
-    const itemFilter = document.getElementById("filterItem").value;
-    const catFilter = document.getElementById("filterCategory").value;
+    const filterItem = document.getElementById("filterItem").value;
+    const filterCategory = document.getElementById("filterCategory").value;
     const filtered = data.filter(r =>
-      (!itemFilter || r.item_name === itemFilter) &&
-      (!catFilter || r.category === catFilter)
+      (!filterItem || r.item_name === filterItem) &&
+      (!filterCategory || r.category === filterCategory)
     );
 
     const grouped = {};
@@ -212,27 +275,6 @@
     loadHistory();
   }
 
-  document.getElementById("unitForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const unit = calcUnitPrice();
-    const { error } = await supabase.from("unit_prices").insert([{
-      item_name: document.getElementById("item_name").value,
-      category: document.getElementById("category").value,
-      price: parseFloat(document.getElementById("price").value),
-      quantity: parseFloat(document.getElementById("quantity").value),
-      volume: parseFloat(document.getElementById("volume").value),
-      unit_price: unit,
-      shop_name: document.getElementById("shop_name").value
-    }]);
-    document.getElementById("status").textContent = error ? "登録に失敗しました" : "登録しました";
-    if (!error) {
-      document.getElementById("unitForm").reset();
-      calcUnitPrice();
-      loadOptions();
-      loadHistory();
-    }
-  });
-
   document.getElementById("formTab").onclick = () => {
     document.getElementById("formSection").style.display = "";
     document.getElementById("historySection").style.display = "none";
@@ -247,17 +289,6 @@
     document.getElementById("historyTab").classList.add("active");
     loadOptions();
     loadHistory();
-  };
-
-  document.getElementById("taxIn").onclick = () => {
-    const val = parseFloat(document.getElementById("price").value);
-    if (!isNaN(val)) document.getElementById("price").value = Math.round(val * 1.1);
-    calcUnitPrice();
-  };
-  document.getElementById("taxOut").onclick = () => {
-    const val = parseFloat(document.getElementById("price").value);
-    if (!isNaN(val)) document.getElementById("price").value = Math.round(val / 1.1);
-    calcUnitPrice();
   };
 
   document.getElementById("filterItem").onchange = loadHistory;
