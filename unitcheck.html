@@ -1,4 +1,3 @@
-
 <div class="tab-buttons">
   <button onclick="showTab('form')">入力フォーム</button>
   <button onclick="showTab('list')">履歴一覧</button>
@@ -6,47 +5,35 @@
 
 <div id="form-tab">
   <form id="unit-form">
-    <div class="form-group">
-      <label>商品名</label>
-      <input type="text" name="item_name" id="item_name" required list="itemList">
-      <datalist id="itemList"></datalist>
+    <div class="form-row">
+      <label>商品名</label><input type="text" id="item_name" required>
+    </div>
+    <div class="form-row">
+      <label>カテゴリ</label><input type="text" id="category" required>
+    </div>
+    <div class="form-row">
+      <label>価格</label><input type="number" id="price" required>
+    </div>
+    <div class="form-row">
+      <label>数量</label><input type="number" id="quantity">
+    </div>
+    <div class="form-row">
+      <label>内容量</label><input type="number" id="amount">
+    </div>
+    <div class="form-row">
+      <label>店名</label><input type="text" id="shop_name">
     </div>
 
-    <div class="form-group">
-      <label>カテゴリ</label>
-      <input type="text" name="category" id="category" required list="categoryList">
-      <datalist id="categoryList"></datalist>
+    <div class="tax-buttons">
+      <button type="button" onclick="adjustTax(1.1)">税込価格にする</button>
+      <button type="button" onclick="adjustTax(1/1.1)">税抜価格にする</button>
     </div>
 
-    <div class="form-group">
-      <label>価格（合計）</label>
-      <input type="number" name="price" id="price" step="0.01" required>
-    </div>
-
-    <div class="form-group">
-      <label>数量</label>
-      <input type="number" name="quantity" id="quantity" value="1" min="1" required>
-    </div>
-
-    <div class="form-group">
-      <label>内容量</label>
-      <input type="number" name="amount" id="amount" step="0.01" value="1" required>
-    </div>
-
-    <div class="form-group">
-      <label>店名</label>
-      <input type="text" name="shop_name" id="shop_name">
-    </div>
-
-    <div class="form-group">
-      <label>単価（自動計算）</label>
-      <input type="text" id="unit_price" disabled>
-    </div>
-
-    <div class="form-group">
-      <button type="submit">登録する</button>
-    </div>
+    <div class="unit-price-display" id="unit_price">単価：-- 円</div>
+    <div style="text-align:center;"><button type="submit">登録する</button></div>
   </form>
+
+  <div id="top3" style="margin-top:20px;"></div>
   <div id="status"></div>
 </div>
 
@@ -61,74 +48,67 @@
     gap: 10px;
     margin-bottom: 16px;
   }
-
   .tab-buttons button {
     padding: 10px 16px;
     font-size: 14px;
-    border: none;
+    border: 2px solid #007aff;
     border-radius: 8px;
-    background-color: #ccc;
+    background-color: white;
+    color: #007aff;
+    font-weight: bold;
     cursor: pointer;
   }
-
-  .tab-buttons button:hover {
-    background-color: #aaa;
-  }
-
-  form {
+  .form-row {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
-    max-width: 480px;
-    margin: auto;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .form-row label {
+    width: 35%;
     font-size: 16px;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .form-group label {
-    margin-bottom: 4px;
     font-weight: bold;
   }
-
-  input {
-    padding: 10px;
+  .form-row input {
+    width: 60%;
     font-size: 16px;
+    padding: 8px;
+    border-radius: 6px;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    font-weight: bold;
   }
-
-  button[type="submit"] {
-    padding: 12px;
-    font-size: 16px;
-    background-color: #007aff;
-    color: white;
-    border: none;
-    border-radius: 8px;
+  .unit-price-display {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 12px 0;
+  }
+  #status {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .tax-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .tax-buttons button {
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #007aff;
+    border-radius: 6px;
+    background: #f0f8ff;
     cursor: pointer;
   }
-
-  #history {
-    max-width: 480px;
-    margin: auto;
-  }
-
   .record {
-    background: white;
-    margin-bottom: 12px;
+    background: #fff;
+    margin: 10px 0;
     padding: 12px;
     border-radius: 10px;
     border: 1px solid #ccc;
   }
-
-  .record span {
-    display: block;
-    margin: 2px 0;
-  }
-
   .record button {
     margin-top: 6px;
     background-color: #ff5e57;
@@ -138,97 +118,130 @@
     padding: 6px 10px;
     cursor: pointer;
   }
+  h3 {
+    margin: 8px 0 4px;
+    font-size: 18px;
+    border-bottom: 1px solid #007aff;
+  }
 </style>
 
 <script>
-async function showTab(name) {
-  document.getElementById("form-tab").style.display = name === 'form' ? "block" : "none";
-  document.getElementById("list-tab").style.display = name === 'list' ? "block" : "none";
-  if (name === "list") {
-    loadHistory();
+let uid = "";
+window.onload = async () => {
+  uid = (await window.supabaseClient.auth.getUser()).data.user.id;
+  showTab('form');
+};
+
+function showTab(tab) {
+  document.getElementById("form-tab").style.display = tab === "form" ? "block" : "none";
+  document.getElementById("list-tab").style.display = tab === "list" ? "block" : "none";
+  if (tab === "list") loadHistory();
+}
+
+function adjustTax(multiplier) {
+  const price = document.getElementById("price");
+  price.value = (parseFloat(price.value || 0) * multiplier).toFixed(0);
+  updateUnitPrice();
+}
+
+async function updateUnitPrice() {
+  const price = parseFloat(document.getElementById("price").value);
+  const qty = parseFloat(document.getElementById("quantity").value || 1);
+  const amt = parseFloat(document.getElementById("amount").value || 1);
+  const up = document.getElementById("unit_price");
+  if (price && qty && amt && qty * amt !== 0) {
+    const result = price / qty / amt;
+    up.textContent = `単価：${result.toFixed(1)} 円`;
+    return result;
+  } else {
+    up.textContent = `単価：-- 円`;
+    return null;
   }
 }
 
-(async () => {
-  const form = document.getElementById("unit-form");
-  const price = document.getElementById("price");
-  const quantity = document.getElementById("quantity");
-  const amount = document.getElementById("amount");
-  const unit_price = document.getElementById("unit_price");
-  const statusEl = document.getElementById("status");
-  const history = document.getElementById("history");
+document.querySelectorAll("#price,#quantity,#amount").forEach(el => {
+  el.addEventListener("input", updateUnitPrice);
+});
 
-  function updateUnitPrice() {
-    const p = parseFloat(price.value);
-    const q = parseFloat(quantity.value);
-    const a = parseFloat(amount.value);
-    if (p && q > 0 && a > 0) {
-      unit_price.value = (p / q / a).toFixed(4);
-    } else {
-      unit_price.value = "";
-    }
+document.getElementById("unit-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const item_name = document.getElementById("item_name").value.trim();
+  const category = document.getElementById("category").value.trim();
+  const shop_name = document.getElementById("shop_name").value.trim();
+  const price = parseFloat(document.getElementById("price").value);
+  const quantity = parseFloat(document.getElementById("quantity").value || 1);
+  const amount = parseFloat(document.getElementById("amount").value || 1);
+  const unit_price = await updateUnitPrice();
+
+  if (!item_name || !category || !price || !unit_price) {
+    document.getElementById("status").textContent = "必須項目が不足しています。";
+    return;
   }
 
-  [price, quantity, amount].forEach(input => {
-    input.addEventListener("input", updateUnitPrice);
+  const { error } = await window.supabaseClient.from("unit_prices").insert([{
+    item_name, category, price, quantity, amount, shop_name,
+    unit_price, user_id: uid
+  }]);
+
+  if (error) {
+    document.getElementById("status").textContent = "登録に失敗しました。";
+  } else {
+    document.getElementById("status").textContent = "登録しました！";
+    document.getElementById("unit-form").reset();
+    document.getElementById("unit_price").textContent = "単価：-- 円";
+    showTop3(item_name, category);
+  }
+});
+
+async function showTop3(name, cat) {
+  const { data } = await window.supabaseClient.from("unit_prices")
+    .select("unit_price, price, quantity, amount, shop_name, created_at")
+    .eq("item_name", name).eq("category", cat)
+    .eq("user_id", uid).order("unit_price", { ascending: true }).limit(3);
+
+  const div = document.getElementById("top3");
+  if (data.length === 0) {
+    div.innerHTML = "";
+    return;
+  }
+
+  div.innerHTML = `<h3>過去の上位3件</h3>` + data.map(d => `
+    <div class="record">
+      <span>${d.quantity}×${d.amount} → ¥${d.price}</span>
+      <span>単価：${d.unit_price.toFixed(1)}円 / ${d.shop_name}</span>
+      <span>${new Date(d.created_at).toLocaleDateString()}</span>
+    </div>
+  `).join("");
+}
+
+async function loadHistory() {
+  const { data } = await window.supabaseClient.from("unit_prices")
+    .select("*").eq("user_id", uid).order("unit_price", { ascending: true });
+
+  const grouped = {};
+  data.forEach(d => {
+    if (!grouped[d.item_name]) grouped[d.item_name] = [];
+    grouped[d.item_name].push(d);
   });
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const item_name = form.item_name.value.trim();
-    const category = form.category.value.trim();
-    const shop_name = form.shop_name.value.trim();
-    const priceVal = parseFloat(price.value);
-    const quantityVal = parseInt(quantity.value);
-    const amountVal = parseFloat(amount.value);
-    const unitPriceVal = parseFloat(unit_price.value);
-    const uid = (await window.supabaseClient.auth.getUser()).data.user.id;
-
-    const { error } = await window.supabaseClient.from("unit_prices").insert([{
-      item_name, category, shop_name,
-      price: priceVal, quantity: quantityVal,
-      amount: amountVal, unit_price: unitPriceVal,
-      user_id: uid
-    }]);
-
-    if (error) {
-      statusEl.textContent = "登録に失敗しました。";
-    } else {
-      statusEl.textContent = "登録しました！";
-      form.reset();
-      unit_price.value = "";
-    }
-  });
-
-  window.loadHistory = async () => {
-    const uid = (await window.supabaseClient.auth.getUser()).data.user.id;
-    const { data, error } = await window.supabaseClient
-      .from("unit_prices")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      history.innerHTML = "<p>履歴の取得に失敗しました。</p>";
-      return;
-    }
-
-    history.innerHTML = data.map(row => `
+  const html = Object.entries(grouped).map(([item, rows]) => `
+    <h3>${item}</h3>
+    ${rows.map(r => `
       <div class="record">
-        <span><strong>${row.item_name}</strong>（${row.category}）</span>
-        <span>${row.quantity}個 × ${row.amount} = ￥${row.price}</span>
-        <span>単価: ￥${row.unit_price} / 単位</span>
-        <span>店名: ${row.shop_name}</span>
-        <span>${new Date(row.created_at).toLocaleString()}</span>
-        <button onclick="deleteRow(${row.id})">削除</button>
+        <span>${r.category} / ${r.shop_name}</span>
+        <span>${r.quantity}×${r.amount} → ¥${r.price}</span>
+        <span>単価：${r.unit_price.toFixed(1)}円</span>
+        <span>${new Date(r.created_at).toLocaleDateString()}</span>
+        <button onclick="deleteRow(${r.id})">削除</button>
       </div>
-    `).join("");
-  };
+    `).join("")}
+  `).join("");
 
-  window.deleteRow = async (id) => {
-    if (!confirm("この記録を削除しますか？")) return;
-    const { error } = await window.supabaseClient.from("unit_prices").delete().eq("id", id);
-    if (!error) loadHistory();
-  };
-})();
+  document.getElementById("history").innerHTML = html;
+}
+
+async function deleteRow(id) {
+  await window.supabaseClient.from("unit_prices").delete().eq("id", id);
+  loadHistory();
+}
 </script>
