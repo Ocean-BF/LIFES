@@ -1,6 +1,5 @@
-<!-- unitcheck-v8.2 FINAL -->
+<!-- unitcheck-v8.4: v7順（div→script→style）・スマホ対応・▼ボタン機能付き -->
 
-<!-- HTML構造 -->
 <div class="tab-buttons">
   <button id="formTab" class="tab-button active">入力フォーム</button>
   <button id="historyTab" class="tab-button">履歴一覧</button>
@@ -9,28 +8,28 @@
 <div id="formSection" class="section">
   <form id="unitForm">
     <div class="row">
-      <label>商品名</label>
-      <input id="item_name" required><button type="button" onclick="showList(this, 'item_name')">▼</button>
+      <label for="item_name">商品名</label>
+      <input id="item_name" required><button type="button" class="select-btn" onclick="showList('item_name')">▼</button>
     </div>
     <div class="row">
-      <label>カテゴリ</label>
-      <input id="category"><button type="button" onclick="showList(this, 'category')">▼</button>
+      <label for="category">カテゴリ</label>
+      <input id="category"><button type="button" class="select-btn" onclick="showList('category')">▼</button>
     </div>
     <div class="row">
-      <label>価格</label>
+      <label for="price">価格</label>
       <input id="price" required>
     </div>
     <div class="row">
-      <label>数量</label>
+      <label for="quantity">数量</label>
       <input id="quantity" value="1">
     </div>
     <div class="row">
-      <label>内容量</label>
+      <label for="volume">内容量</label>
       <input id="volume" value="1">
     </div>
     <div class="row">
-      <label>店名</label>
-      <input id="shop_name"><button type="button" onclick="showList(this, 'shop_name')">▼</button>
+      <label for="shop_name">店名</label>
+      <input id="shop_name"><button type="button" class="select-btn" onclick="showList('shop_name')">▼</button>
     </div>
     <div class="row">
       <label>単価</label>
@@ -40,9 +39,7 @@
       <button type="button" id="taxIn">税込価格にする</button>
       <button type="button" id="taxOut">税抜価格にする</button>
     </div>
-    <div class="row">
-      <button type="submit" id="submitButton">登録する</button>
-    </div>
+    <div class="row"><button type="submit" id="submitButton">登録する</button></div>
     <div id="status" class="status"></div>
   </form>
 </div>
@@ -59,32 +56,25 @@
   </div>
 </div>
 
-<div id="modal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <p>このデータを削除しますか？</p>
-    <div class="modal-buttons">
-      <button id="confirmDelete">削除する</button>
-      <button onclick="closeModal()">キャンセル</button>
-    </div>
-  </div>
-</div>
-
-<!-- JavaScript -->
 <script>
-let deleteTargetId = null;
+let lists = {};
 
-function showList(button, field) {
+function showList(field) {
   const input = document.getElementById(field);
   const list = lists[field];
   if (!list || list.length === 0) return;
 
+  const existing = document.getElementById(field + "_dropdown");
+  if (existing) existing.remove();
+
   const dropdown = document.createElement("select");
+  dropdown.id = field + "_dropdown";
   dropdown.innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join("");
   dropdown.onchange = () => {
     input.value = dropdown.value;
     dropdown.remove();
   };
-  button.parentNode.appendChild(dropdown);
+  input.parentNode.appendChild(dropdown);
 }
 
 function calcUnitPrice() {
@@ -141,8 +131,8 @@ async function loadHistory() {
     table.className = "history-table";
     table.innerHTML = `
       <thead>
-        <tr><th colspan="6">${item}</th></tr>
-        <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>編集</th><th>削除</th></tr>
+        <tr><th colspan="4">${item}</th></tr>
+        <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th></tr>
       </thead>`;
     const tbody = document.createElement("tbody");
     rows.sort((a, b) => a.unit_price - b.unit_price);
@@ -152,9 +142,7 @@ async function loadHistory() {
         <td>${r.category || ""}</td>
         <td>${r.shop_name || ""}</td>
         <td>${r.unit_price?.toFixed(1)}</td>
-        <td>${r.created_at?.split("T")[0]}</td>
-        <td><button onclick="editRow(this, '${r.id}')">編集</button></td>
-        <td><button onclick="openModal('${r.id}')">削除</button></td>`;
+        <td>${r.created_at?.split("T")[0]}</td>`;
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -162,44 +150,6 @@ async function loadHistory() {
     container.appendChild(wrapper);
   });
 }
-
-function editRow(btn, id) {
-  const tr = btn.closest("tr");
-  const [cat, shop, unit, date] = [...tr.children].slice(0, 4).map(td => td.textContent);
-  tr.innerHTML = `
-    <td><input value="${cat}"></td>
-    <td><input value="${shop}"></td>
-    <td><input value="${unit}"></td>
-    <td>${date}</td>
-    <td><button onclick="saveRow(this, '${id}')">保存</button></td>
-    <td><button onclick="loadHistory()">キャンセル</button></td>`;
-}
-
-async function saveRow(btn, id) {
-  const tr = btn.closest("tr");
-  const [cat, shop, unit] = [...tr.querySelectorAll("input")].map(i => i.value);
-  await window.supabaseClient.from("unit_prices").update({
-    category: cat,
-    shop_name: shop,
-    unit_price: parseFloat(unit)
-  }).eq("id", id);
-  loadHistory();
-}
-
-function openModal(id) {
-  deleteTargetId = id;
-  document.getElementById("modal").style.display = "block";
-}
-function closeModal() {
-  deleteTargetId = null;
-  document.getElementById("modal").style.display = "none";
-}
-document.getElementById("confirmDelete").onclick = async () => {
-  if (!deleteTargetId) return;
-  await window.supabaseClient.from("unit_prices").delete().eq("id", deleteTargetId);
-  closeModal();
-  loadHistory();
-};
 
 document.getElementById("unitForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -255,7 +205,6 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<!-- CSS -->
 <style>
   .tab-buttons { display: flex; justify-content: center; margin: 10px 0; gap: 10px; }
   .tab-button {
@@ -263,13 +212,20 @@ window.addEventListener("DOMContentLoaded", () => {
     border-radius: 6px; font-size: 1rem; min-width: 100px;
   }
   .tab-button.active { background: #007bff; color: white; }
-  .row { display: flex; align-items: center; margin: 10px 8px; gap: 8px; flex-wrap: nowrap; }
-  .row input, .row select { flex: 1; font-size: 1.2rem; padding: 4px 8px; font-weight: bold; }
-  label { width: 30%; min-width: 100px; font-size: 1.2rem; font-weight: bold; }
-  .unit-price { font-size: 1.6rem; font-weight: bold; }
-  .buttons button, #submitButton {
-    padding: 6px 16px; border: 2px solid #007bff; border-radius: 6px;
-    font-size: 1.1rem; font-weight: bold; background: white; color: #007bff;
+  .row {
+    display: flex; align-items: center; margin: 10px 8px; gap: 6px;
+    flex-wrap: nowrap; overflow-x: auto;
+  }
+  .row input { flex: 1; font-size: 1.1rem; padding: 4px 6px; font-weight: bold; }
+  .row button.select-btn {
+    padding: 4px 8px; font-size: 1.1rem; font-weight: bold; border: 1px solid #007bff;
+    background: #eaf4ff; border-radius: 4px;
+  }
+  label { width: 30%; min-width: 80px; font-size: 1.1rem; font-weight: bold; }
+  .unit-price { font-size: 1.4rem; font-weight: bold; }
+  #submitButton, .buttons button {
+    padding: 6px 12px; border: 2px solid #007bff; border-radius: 6px;
+    font-size: 1rem; font-weight: bold; background: white; color: #007bff;
   }
   #submitButton { background: #007bff; color: white; width: 100%; margin-top: 8px; }
   .status { text-align: center; margin: 10px 0; font-weight: bold; color: red; }
@@ -277,35 +233,20 @@ window.addEventListener("DOMContentLoaded", () => {
   .filter-row { flex-wrap: wrap; overflow-x: visible; }
   #historyListWrapper { overflow-x: hidden; }
   .table-wrapper { overflow-x: auto; margin-bottom: 20px; }
-
   .history-table {
-    width: max-content;
-    table-layout: fixed;
-    background: white;
+    min-width: 600px;
+    width: 100%;
     border-collapse: collapse;
+    background: white;
   }
   .history-table th, .history-table td {
     border: 1px solid #ccc;
     padding: 6px;
     font-size: 1rem;
-    text-align: left;
-    min-width: 120px;
-    max-width: 200px;
-    white-space: normal;
+    word-break: break-word;
   }
   .history-table th[colspan] {
     background: #f2f2f2;
     font-size: 1.1rem;
-  }
-
-  .modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-  }
-  .modal-content {
-    background: white; padding: 20px; border-radius: 6px; text-align: center;
-  }
-  .modal-buttons button {
-    margin: 10px; padding: 8px 16px; font-size: 1rem;
   }
 </style>
