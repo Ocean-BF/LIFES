@@ -196,6 +196,7 @@ const priceInput = document.getElementById("price");
       status.textContent = "登録に失敗しました：" + error.message;
     } else {
       status.textContent = "登録しました。";
+      setTimeout(() => { status.textContent = ""; }, 3000);
       document.getElementById("unitForm").reset();
       originalPrice = null;
       calcUnitPrice();
