@@ -70,9 +70,21 @@
   </div>
 </div>
   </div>
+  <div id="historySection" class="section" style="display:none;">
+  <div class="filter-row">
+    <div class="row">
+      <label>商品名</label>
+      <select id="filterItem"><option value="">すべて</option></select>
+    </div>
+    <div class="row">
+      <label>カテゴリ</label>
+      <select id="filterCategory"><option value="">すべて</option></select>
+    </div>
+  </div>
   <div id="historyListWrapper">
     <div id="historyList"></div>
   </div>
+</div>
 </div>
 
 <!-- モーダル -->
@@ -223,8 +235,8 @@ const priceInput = document.getElementById("price");
     const filterItem = document.getElementById("filterItem").value;
     const filterCategory = document.getElementById("filterCategory").value;
     const filtered = data.filter(r => {
-      if (filterItem && r.item_name !== filterItem) return false;
-      if (filterCategory && r.category !== filterCategory) return false;
+      if (filterItem.trim() && r.item_name !== filterItem.trim()) return false;
+      if (filterCategory.trim() && r.category !== filterCategory.trim()) return false;
       return true;
     }
     );
@@ -370,6 +382,17 @@ document.getElementById("resetButton").addEventListener("click", () => {
       setTaxButtonsState(taxOutBtn, taxInBtn);
     }
   });
+    }
+  });
+
+  taxOutBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value / 1.1);
+      calcUnitPrice();
+      setTaxButtonsState(taxOutBtn, taxInBtn);
+    }
+  });
 
 </script>
 <style>
@@ -453,6 +476,7 @@ document.getElementById("resetButton").addEventListener("click", () => {
   }
 
   .buttons button,
+.buttons button.active { background-color: #aaa !important; color: white !important; cursor: not-allowed; }
   
 
   
