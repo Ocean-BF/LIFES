@@ -212,13 +212,7 @@ const priceInput = document.getElementById("price");
     if (!data) return;
     const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
     const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
-    const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
-    
-    
-    
-    
-
-    const setFilter = (id, values) => {
+    const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];const setFilter = (id, values) => {
       const el = document.getElementById(id);
       el.innerHTML = '<option value="">すべて</option>';
       values.forEach(v => {
@@ -325,13 +319,13 @@ const priceInput = document.getElementById("price");
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
-  loadOptions();
-  loadHistory();
-  document.getElementById("formSection").style.display = "none";
-  document.getElementById("historySection").style.display = "";
-  document.getElementById("formTab").classList.remove("active");
-  document.getElementById("historyTab").classList.add("active");
-}););
+    loadOptions();
+    loadHistory();
+    document.getElementById("formSection").style.display = "none";
+    document.getElementById("historySection").style.display = "";
+    document.getElementById("formTab").classList.remove("active");
+    document.getElementById("historyTab").classList.add("active");
+  });
 
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
