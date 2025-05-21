@@ -207,11 +207,8 @@ const priceInput = document.getElementById("price");
   async function loadOptions() {
   const itemSelect = document.getElementById("filterItem");
   const catSelect = document.getElementById("filterCategory");
-    const supabase = window.supabaseClient;
-    const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
-    if (!data) return;
-    const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
-    const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
+  const items = [...new Set(window.unitData.map(r => r.item_name).filter(Boolean))];
+  const cats = [...new Set(window.unitData.map(r => r.category).filter(Boolean))];
     const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
     const setDatalist = (id, values) => {
       const el = document.getElementById(id);
@@ -243,6 +240,7 @@ const priceInput = document.getElementById("price");
   async function loadHistory() {
     const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("*");
+  window.unitData = data;
     const container = document.getElementById("historyList");
     if (!data) {
       container.textContent = "履歴の取得に失敗しました。";
@@ -332,18 +330,16 @@ const priceInput = document.getElementById("price");
     document.getElementById("historyTab").classList.remove("active");
   });
 
-  document.getElementById("historyTab").addEventListener("click", () => {
+  
+document.getElementById("historyTab").addEventListener("click", () => {
   loadOptions();
   loadHistory();
-  loadOptions();
-  loadHistory();
-    document.getElementById("formSection").style.display = "none";
-    document.getElementById("historySection").style.display = "";
-    document.getElementById("formTab").classList.remove("active");
-    document.getElementById("historyTab").classList.add("active");
-    loadOptions();
-    loadHistory();
-  });
+  document.getElementById("formSection").style.display = "none";
+  document.getElementById("historySection").style.display = "";
+  document.getElementById("formTab").classList.remove("active");
+  document.getElementById("historyTab").classList.add("active");
+});
+);
 
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
@@ -385,6 +381,23 @@ document.getElementById("resetButton").addEventListener("click", () => {
 
 
 function setSelectOptions(id, values) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "すべて";
+  el.appendChild(allOption);
+  [...new Set(values)].forEach(v => {
+    const option = document.createElement("option");
+    option.value = v;
+    option.textContent = v;
+    el.appendChild(option);
+  });
+}
+
+
+function setFilter(id, values) {
   const el = document.getElementById(id);
   if (!el) return;
   el.innerHTML = "";
