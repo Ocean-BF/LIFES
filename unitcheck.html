@@ -70,18 +70,7 @@
     <select id="filterCategory"><option value="">すべて</option></select>
   </div>
 </div>
-  </div>
-  <div id="historySection" class="section" style="display:none;">
-  <div class="filter-row">
-    <div class="row">
-      <label>商品名</label>
-      <select id="filterItem"><option value="">すべて</option></select>
-    </div>
-    <div class="row">
-      <label>カテゴリ</label>
-      <select id="filterCategory"><option value="">すべて</option></select>
-    </div>
-  </div>
+  
   <div id="historyListWrapper">
     <div id="historyList"></div>
   </div>
@@ -353,7 +342,8 @@ document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
 });
 
 document.getElementById("resetButton").addEventListener("click", () => {
-  document.getElementById("unitForm").reset();
+  originalPrice = null;
+document.getElementById("unitForm").reset();
   calcUnitPrice();
   status.textContent = "";
 });
@@ -362,25 +352,11 @@ document.getElementById("resetButton").addEventListener("click", () => {
   }
   });
 
-  taxOutBtn.addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) {
-      priceInput.value = Math.round(value / 1.1);
-      calcUnitPrice();
-      setTaxButtonsState(taxOutBtn, taxInBtn);
-    }
-  });
+  
     }
   });
 
-  taxOutBtn.addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) {
-      priceInput.value = Math.round(value / 1.1);
-      calcUnitPrice();
-      setTaxButtonsState(taxOutBtn, taxInBtn);
-    }
-  });
+  
 
 
 function setTaxButtonsState(activeButton, other1, other2) {
@@ -405,14 +381,7 @@ taxInBtn.addEventListener("click", () => {
   }
 });
 
-taxOutBtn.addEventListener("click", () => {
-  const value = parseFloat(priceInput.value);
-  if (!isNaN(value)) {
-    priceInput.value = Math.round(value / 1.1);
-    calcUnitPrice();
-    setTaxButtonsState(taxOutBtn, taxInBtn, taxResetBtn);
-  }
-});
+
 
 taxResetBtn.addEventListener("click", () => {
   if (!isNaN(originalPrice)) {
