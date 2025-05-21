@@ -69,14 +69,9 @@
     <select id="filterCategory"><option value="">すべて</option></select>
   </div>
 </div>
-
-    <label>商品名</label>
-    <select id="filterItem"><option value="">すべて</option></select>
-    <label>カテゴリ</label>
-    <select id="filterCategory"><option value="">すべて</option></select>
   </div>
   <div id="historyListWrapper">
-    
+    <div id="historyList"></div>
   </div>
 </div>
 
@@ -125,12 +120,7 @@ const priceInput = document.getElementById("price");
 
   priceInput.addEventListener("input", calcUnitPrice);
   quantityInput.addEventListener("input", calcUnitPrice);
-  volumeInput.addEventListener("input", calcUnitPrice);
-
-  
-    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
-    calcUnitPrice();
-  });
+  volumeInput.addEventListener("input", calcUnitPrice);});
 
   const dropdownButtons = document.querySelectorAll(".dropdown-btn");
   const modal = document.getElementById("modal");
@@ -155,6 +145,7 @@ const priceInput = document.getElementById("price");
           modal.style.display = "none";
         });
         modalList.appendChild(li);
+      });
       modal.style.display = "block";
     });
   });
@@ -201,6 +192,7 @@ const priceInput = document.getElementById("price");
         const option = document.createElement("option");
         option.value = v;
         el.appendChild(option);
+      });
     };
     setDatalist("item_list", items);
     setDatalist("category_list", cats);
@@ -214,6 +206,7 @@ const priceInput = document.getElementById("price");
         option.value = v;
         option.textContent = v;
         el.appendChild(option);
+      });
     };
     setFilter("filterItem", items);
     setFilter("filterCategory", cats);
@@ -300,6 +293,7 @@ const priceInput = document.getElementById("price");
       table.appendChild(tbody);
       wrapper.appendChild(table);
       container.appendChild(wrapper);
+    });
   }
 
   document.getElementById("formTab").addEventListener("click", () => {
@@ -358,17 +352,11 @@ document.getElementById("resetButton").addEventListener("click", () => {
   const taxOutBtn = document.getElementById("taxOut");
 
   taxInBtn.addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
-    calcUnitPrice();
-    setTaxButtonsState(taxInBtn, taxOutBtn);
+    const value = parseFloat(priceInput.value);setTaxButtonsState(taxInBtn, taxOutBtn);
   });
 
   taxOutBtn.addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
-    calcUnitPrice();
-    setTaxButtonsState(taxOutBtn, taxInBtn);
+    const value = parseFloat(priceInput.value);setTaxButtonsState(taxOutBtn, taxInBtn);
   });
 
 </script>
