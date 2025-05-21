@@ -46,6 +46,7 @@
   <div class="row buttons">
     <button type="button" id="taxIn">税込</button>
     <button type="button" id="taxOut">税抜</button>
+    <button type="button" id="taxReset">非課税</button>
   </div>
   <div class="row submit-row">
   <button type="button" id="resetButton" class="btn-reset">リセット</button>
@@ -111,6 +112,7 @@ const supabaseClient = supabase.createClient(
 );
 let selectedTax = null;
 
+let originalPrice = null;
 const priceInput = document.getElementById("price");
   const quantityInput = document.getElementById("quantity");
   const volumeInput = document.getElementById("volume");
@@ -130,7 +132,10 @@ const priceInput = document.getElementById("price");
     return null;
   }
 
-  priceInput.addEventListener("input", calcUnitPrice);
+  priceInput.addEventListener("input", () => {
+  originalPrice = parseFloat(priceInput.value);
+  calcUnitPrice();
+});
   quantityInput.addEventListener("input", calcUnitPrice);
   volumeInput.addEventListener("input", calcUnitPrice);
 
@@ -318,6 +323,7 @@ const priceInput = document.getElementById("price");
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
+    loadOptions();
     document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
@@ -329,7 +335,6 @@ const priceInput = document.getElementById("price");
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
   window.addEventListener("DOMContentLoaded", () => {
-    loadOptions();
     calcUnitPrice();
   });
 
@@ -355,22 +360,44 @@ document.getElementById("resetButton").addEventListener("click", () => {
 });
 
 
-  function setTaxButtonsState(activeButton, inactiveButton) {
+  function setTaxButtonsState(activeButton, other1, other2) {
     activeButton.classList.add("active");
     activeButton.disabled = true;
-    inactiveButton.classList.remove("active");
-    inactiveButton.disabled = false;
+    other1.classList.remove("active");
+    other1.disabled = false;
+    other2.classList.remove("active");
+    other2.disabled = false;
   }
 
   const taxInBtn = document.getElementById("taxIn");
   const taxOutBtn = document.getElementById("taxOut");
+  const taxResetBtn = document.getElementById("taxReset");
 
   taxInBtn.addEventListener("click", () => {
     const value = parseFloat(priceInput.value);
     if (!isNaN(value)) {
       priceInput.value = Math.round(value * 1.1);
       calcUnitPrice();
-      setTaxButtonsState(taxInBtn, taxOutBtn);
+      setTaxButtonsState(taxInBtn, taxOutBtn, taxResetBtn);
+    }
+  });
+
+  taxOutBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value / 1.1);
+      calcUnitPrice();
+      setTaxButtonsState(taxOutBtn, taxInBtn, taxResetBtn);
+    }
+  });
+
+  taxResetBtn.addEventListener("click", () => {
+    if (!isNaN(originalPrice)) {
+      priceInput.value = originalPrice;
+      calcUnitPrice();
+      setTaxButtonsState(taxResetBtn, taxInBtn, taxOutBtn);
+    }
+  });
     }
   });
 
@@ -780,6 +807,13 @@ button.btn-reset, button.btn-submit {
 #cancelDeleteBtn {
   background: #bdc3c7;
   color: #333;
+}
+
+
+.history-table td:nth-child(4),
+.history-table th:nth-child(4) {
+  min-width: 100px;
+  white-space: nowrap;
 }
 
 </style>
