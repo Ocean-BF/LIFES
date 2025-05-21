@@ -96,11 +96,9 @@
 
 
 <script>
-  const priceInput = document.getElementById("price");
-  const quantityInput = document.getElementById("quantity");
+    const quantityInput = document.getElementById("quantity");
   const volumeInput = document.getElementById("volume");
-  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
-  const status = document.getElementById("status");
+    const status = document.getElementById("status");
 
   function calcUnitPrice() {
     const price = parseFloat(priceInput.value);
@@ -373,9 +371,6 @@ document.getElementById("taxOut").addEventListener("click", () => {
 
 const taxInBtn = document.getElementById("taxIn");
 const taxOutBtn = document.getElementById("taxOut");
-const priceInput = document.getElementById("price");
-const resetButton = document.getElementById("resetButton");
-const unitPriceDisplay = document.getElementById("unitPriceDisplay");
 
 taxInBtn.addEventListener("click", () => {
   if (!taxInBtn.disabled) {
