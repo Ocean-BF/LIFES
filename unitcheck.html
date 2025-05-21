@@ -6,54 +6,53 @@
 
 <!-- 入力フォーム -->
 <div id="formSection" class="section">
-  <form id="unitForm">
-    <div class="row">
-      <div class="row"><div class="col label">商品名</div><div class="col input"><input id="item_name"></div><div class="col button"><button class="dropdown-btn" data-target="item_name">▼</button></div></div>
-      <div class="input-combo">
-        <input list="item_list" id="item_name" name="item_name" required>
-        <button type="button" class="dropdown-btn" data-target="item_name">▼</button>
-      </div>
-      <datalist id="item_list"></datalist>
-    </div>
-    <div class="row">
-      <div class="row"><div class="col label">カテゴリ</div><div class="col input"><input id="category"></div><div class="col button"><button class="dropdown-btn" data-target="category">▼</button></div></div>
-      <div class="input-combo">
-        <input list="category_list" id="category" name="category">
-        <button type="button" class="dropdown-btn" data-target="category">▼</button>
-      </div>
-      <datalist id="category_list"></datalist>
-    </div>
-    <div class="row">
-      <div class="row"><div class="col label">価格</div><div class="col input"><input id="price"></div><div class="col button"></div></div>
-      <input id="price" required>
-    </div>
-    <div class="row">
-      <div class="row"><div class="col label">数量</div><div class="col input"><input id="quantity" value="1"></div><div class="col button"></div></div>
-      <input id="quantity" value="1" required>
-    </div>
-    <div class="row">
-      <div class="row"><div class="col label">内容量</div><div class="col input"><input id="volume" value="1"></div><div class="col button"></div></div>
-      <input id="volume" value="1" required>
-    </div>
-    <div class="row">
-      <div class="row"><div class="col label">店名</div><div class="col input"><input id="shop_name"></div><div class="col button"><button class="dropdown-btn" data-target="shop_name">▼</button></div></div>
-      <div class="input-combo">
-        <input list="shop_list" id="shop_name" name="shop_name">
-        <button type="button" class="dropdown-btn" data-target="shop_name">▼</button>
-      </div>
-      <datalist id="shop_list"></datalist>
-    </div>
-    <div class="row">
-      <label>単価</label>
-      <div id="unitPriceDisplay" class="unit-price">-- 円</div>
-    </div>
-    <div class="row buttons">
-      <button type="button" id="taxIn">税込価格にする</button>
-      <button type="button" id="taxOut">税抜価格にする</button>
-    </div>
-    <div class="row"><button type="submit" id="submitButton">登録する</button></div>
-    <div id="status" class="status"></div>
-  </form>
+  
+<form id="unitForm">
+  <div class="row">
+    <div class="col label">商品名</div>
+    <div class="col input"><input id="item_name"></div>
+    <div class="col button"><button type="button" class="dropdown-btn" data-target="item_name">▼</button></div>
+  </div>
+  <div class="row">
+    <div class="col label">カテゴリ</div>
+    <div class="col input"><input id="category"></div>
+    <div class="col button"><button type="button" class="dropdown-btn" data-target="category">▼</button></div>
+  </div>
+  <div class="row">
+    <div class="col label">価格</div>
+    <div class="col input"><input id="price"></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row">
+    <div class="col label">数量</div>
+    <div class="col input"><input id="quantity" value="1"></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row">
+    <div class="col label">内容量</div>
+    <div class="col input"><input id="volume" value="1"></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row">
+    <div class="col label">店名</div>
+    <div class="col input"><input id="shop_name"></div>
+    <div class="col button"><button type="button" class="dropdown-btn" data-target="shop_name">▼</button></div>
+  </div>
+  <div class="row">
+    <div class="col label">単価</div>
+    <div class="col input"><div id="unitPriceDisplay" class="unit-price">-- 円</div></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row buttons">
+    <button type="button" id="taxIn">税込価格にする</button>
+    <button type="button" id="taxOut">税抜価格にする</button>
+  </div>
+  <div class="row submit-row">
+    <button type="button" id="resetButton">リセット</button>
+    <button type="submit" id="submitButton">登録する</button>
+  </div>
+</form>
+
 </div>
 
 <!-- 履歴 -->
@@ -581,6 +580,10 @@ label {
   width: 100%;
   padding: 6px;
   box-sizing: border-box;
+}
+.unit-price {
+  font-size: 1.3rem;
+  font-weight: bold;
 }
 
 </style>
