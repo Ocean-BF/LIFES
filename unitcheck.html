@@ -103,6 +103,13 @@ const supabaseClient = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0'
 );
 let selectedTax = null;
+
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  'https://mzuqsfoqkaopxhyggwyk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0'
+);
+let selectedTax = null;
 </script>
 const priceInput = document.getElementById("price");
   const quantityInput = document.getElementById("quantity");
