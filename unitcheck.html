@@ -45,6 +45,7 @@
   </div>
   <div class="row buttons">
     <button type="button" id="taxIn">税込</button>
+    <button type="button" id="taxReset">非課税</button>
     <button type="button" id="taxOut">税抜</button>
   </div>
   <div class="row submit-row">
@@ -104,6 +105,7 @@ const supabaseClient = supabase.createClient(
 );
 let selectedTax = null;
 
+let originalPrice = null;
 const priceInput = document.getElementById("price");
   const quantityInput = document.getElementById("quantity");
   const volumeInput = document.getElementById("volume");
@@ -123,7 +125,10 @@ const priceInput = document.getElementById("price");
     return null;
   }
 
-  priceInput.addEventListener("input", calcUnitPrice);
+  priceInput.addEventListener("input", () => {
+  originalPrice = parseFloat(priceInput.value);
+  calcUnitPrice();
+});
   quantityInput.addEventListener("input", calcUnitPrice);
   volumeInput.addEventListener("input", calcUnitPrice);
 
@@ -189,6 +194,7 @@ const priceInput = document.getElementById("price");
     } else {
       status.textContent = "登録しました。";
       document.getElementById("unitForm").reset();
+      originalPrice = null;
       calcUnitPrice();
       loadHistory();
       loadOptions();
@@ -352,10 +358,20 @@ document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
 });
 
 document.getElementById("resetButton").addEventListener("click", () => {
+  originalPrice = null;
   document.getElementById("unitForm").reset();
+      originalPrice = null;
   calcUnitPrice();
   status.textContent = "";
 });
+
+
+  document.getElementById("taxReset").addEventListener("click", () => {
+    if (!isNaN(originalPrice)) {
+      priceInput.value = originalPrice;
+      calcUnitPrice();
+    }
+  });
 
 </script>
 <style>
