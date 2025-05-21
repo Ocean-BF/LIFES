@@ -296,11 +296,9 @@ const priceInput = document.getElementById("price");
           tr.querySelector(".cancel-btn").addEventListener("click", loadHistory);
         });
 
-        tr.querySelector(".delete-btn").addEventListener("click", async () => {
-          deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
-          const supabase = window.supabaseClient;
-          await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
-          loadHistory();
+        tr.querySelector(".delete-btn").addEventListener("click", () => {
+          deleteTarget = { item, created_at: r.created_at };
+          document.getElementById("deleteModal").style.display = "flex";
         });
 
       });
@@ -313,6 +311,7 @@ const priceInput = document.getElementById("price");
   document.getElementById("formTab").addEventListener("click", () => {
   
     document.getElementById("formSection").style.display = "";
+    document.getElementById("historyListWrapper").style.display = "none";
     document.getElementById("historySection").style.display = "none";
     document.getElementById("formTab").classList.add("active");
     document.getElementById("historyTab").classList.remove("active");
@@ -323,6 +322,7 @@ const priceInput = document.getElementById("price");
     loadHistory();
     document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
+    document.getElementById("historyListWrapper").style.display = "block";
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
   });
@@ -749,4 +749,49 @@ button.btn-reset, button.btn-submit {
   white-space: nowrap;
 }
 
+</style>
+<style>
+#deleteModal .modal-content {
+  text-align: center;
+  padding: 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  width: 90%;
+  max-width: 320px;
+}
+
+#deleteModal p {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+#confirmDeleteBtn, #cancelDeleteBtn {
+  padding: 10px 16px;
+  margin: 0 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#confirmDeleteBtn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+#confirmDeleteBtn:hover {
+  background-color: #c0392b;
+}
+
+#cancelDeleteBtn {
+  background-color: #bdc3c7;
+  color: white;
+}
+
+#cancelDeleteBtn:hover {
+  background-color: #95a5a6;
+}
 </style>
