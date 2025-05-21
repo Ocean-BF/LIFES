@@ -100,13 +100,14 @@
 </div>
 
 
+
 <script>
+const SUPABASE_URL = "https://your-project.supabase.co";  // 実際のURLに置き換えてください
+const SUPABASE_ANON_KEY = "your-anon-key";  // 実際のキーに置き換えてください
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 
-const SUPABASE_URL = "https://your-project.supabase.co";
-const SUPABASE_ANON_KEY = "your-anon-key";
-const supabase = supabase || window.supabaseClient || createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supabaseClient = supabase;
-
+<script>
 
 const supabaseClient = supabase.createClient(
   'https://mzuqsfoqkaopxhyggwyk.supabase.co',
@@ -163,7 +164,7 @@ const priceInput = document.getElementById("price");
       const targetId = btn.getAttribute("data-target");
       currentTargetInput = document.getElementById(targetId);
       const supabase = window.supabaseClient;
-      const { data } = await window.supabaseClient.from("unit_prices").select(targetId);
+      const { data } = await supabase.from("unit_prices").select(targetId);
       const values = [...new Set(data.map(r => r[targetId]).filter(Boolean))];
       modalList.innerHTML = "";
       values.forEach(v => {
@@ -189,7 +190,7 @@ const priceInput = document.getElementById("price");
     e.preventDefault();
     const unit = calcUnitPrice();
     const supabase = window.supabaseClient;
-    const { error } = await window.supabaseClient.from("unit_prices").insert([{
+    const { error } = await supabase.from("unit_prices").insert([{
       item_name: document.getElementById("item_name").value,
       category: document.getElementById("category").value,
       price: parseFloat(priceInput.value),
@@ -245,7 +246,7 @@ const priceInput = document.getElementById("price");
 
   async function loadHistory() {
     const supabase = window.supabaseClient;
-    const { data } = await window.supabaseClient.from("unit_prices").select("*");
+    const { data } = await supabase.from("unit_prices").select("*");
     const container = document.getElementById("historyList");
     if (!data) {
       container.textContent = "履歴の取得に失敗しました。";
@@ -303,7 +304,7 @@ const priceInput = document.getElementById("price");
           tr.querySelector(".save-btn").addEventListener("click", async () => {
             const inputs = tr.querySelectorAll("input");
             const supabase = window.supabaseClient;
-            await window.supabaseClient.from("unit_prices").update({
+            await supabase.from("unit_prices").update({
               category: inputs[0].value,
               shop_name: inputs[1].value,
               unit_price: parseFloat(inputs[2].value)
@@ -316,7 +317,7 @@ const priceInput = document.getElementById("price");
         tr.querySelector(".delete-btn").addEventListener("click", async () => {
           deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
           const supabase = window.supabaseClient;
-          await window.supabaseClient.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
+          await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
           loadHistory();
         });
 
@@ -359,7 +360,7 @@ let deleteTarget = null;
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
   const supabase = window.supabaseClient;
   if (deleteTarget) {
-    await window.supabaseClient.from("unit_prices").delete()
+    await supabase.from("unit_prices").delete()
       .eq("item_name", deleteTarget.item)
       .eq("created_at", deleteTarget.created_at);
     document.getElementById("deleteModal").style.display = "none";
@@ -414,7 +415,7 @@ async function loadHistory() {
   }
   historyList.innerHTML = "";
 
-  const { data } = await window.supabaseClient.from("unit_prices").select("*");
+  const { data } = await supabase.from("unit_prices").select("*");
   if (!data) return;
   window.unitData = data;
 
