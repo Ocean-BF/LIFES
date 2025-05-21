@@ -100,11 +100,17 @@ const supabaseClient = supabase.createClient(
 );
 let selectedTax = null;
 
-let originalPrice = null;
+
 const priceInput = document.getElementById("price");
-  const quantityInput = document.getElementById("quantity");
-  const volumeInput = document.getElementById("volume");
-  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
+const quantityInput = document.getElementById("quantity");
+const volumeInput = document.getElementById("volume");
+const unitPriceDisplay = document.getElementById("unitPriceDisplay");
+const status = document.getElementById("status");
+const taxInBtn = document.getElementById("taxIn");
+const taxOutBtn = document.getElementById("taxOut");
+const taxResetBtn = document.getElementById("taxReset");
+let originalPrice = null;
+
   const status = document.getElementById("status");
 
   function calcUnitPrice() {
@@ -184,8 +190,21 @@ const priceInput = document.getElementById("price");
   });
 
   async function loadOptions() {
+
     const supabase = window.supabaseClient;
-    const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
+    let data;
+try {
+  const res = await supabase.from("unit_prices").select("item_name, category, shop_name");
+  data = res.data;
+  if (!data) {
+    console.error("データ取得に失敗しました");
+    return;
+  }
+} catch (err) {
+  console.error("loadOptions エラー:", err);
+  return;
+}
+("unit_prices").select("item_name, category, shop_name");
     if (!data) return;
     const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
     const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
@@ -290,10 +309,8 @@ const priceInput = document.getElementById("price");
         });
 
         tr.querySelector(".delete-btn").addEventListener("click", async () => {
-          deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
-          const supabase = window.supabaseClient;
-          await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
-          loadHistory();
+          deleteTarget = { item, created_at: r.created_at };
+          document.getElementById("deleteModal").style.display = "flex";
         });
 
       });
@@ -311,7 +328,6 @@ const priceInput = document.getElementById("price");
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
-    loadOptions();
     document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
@@ -359,6 +375,7 @@ document.getElementById("unitForm").reset();
   
 
 
+
 function setTaxButtonsState(activeButton, other1, other2) {
   activeButton.classList.add("active");
   activeButton.disabled = true;
@@ -368,16 +385,41 @@ function setTaxButtonsState(activeButton, other1, other2) {
   other2.disabled = false;
 }
 
+function calculateTax(price, rate) {
+  const value = parseFloat(price);
+  return !isNaN(value) ? Math.round(value * rate) : null;
+}
+
 const taxInBtn = document.getElementById("taxIn");
 const taxOutBtn = document.getElementById("taxOut");
 const taxResetBtn = document.getElementById("taxReset");
 
 taxInBtn.addEventListener("click", () => {
-  const value = parseFloat(priceInput.value);
-  if (!isNaN(value)) {
-    priceInput.value = Math.round(value * 1.1);
+  const taxed = calculateTax(priceInput.value, 1.1);
+  if (taxed !== null) {
+    priceInput.value = taxed;
     calcUnitPrice();
     setTaxButtonsState(taxInBtn, taxOutBtn, taxResetBtn);
+  }
+});
+
+taxOutBtn.addEventListener("click", () => {
+  const untaxed = calculateTax(priceInput.value, 1 / 1.1);
+  if (untaxed !== null) {
+    priceInput.value = untaxed;
+    calcUnitPrice();
+    setTaxButtonsState(taxOutBtn, taxInBtn, taxResetBtn);
+  }
+});
+
+taxResetBtn.addEventListener("click", () => {
+  if (!isNaN(originalPrice)) {
+    priceInput.value = originalPrice;
+    calcUnitPrice();
+    setTaxButtonsState(taxResetBtn, taxInBtn, taxOutBtn);
+  }
+});
+
   }
 });
 
