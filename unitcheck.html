@@ -204,7 +204,7 @@ const priceInput = document.getElementById("price");
     }
   });
 
-  async function loadOptions() {
+  function loadOptions(data) {
   const itemSelect = document.getElementById("filterItem");
   const catSelect = document.getElementById("filterCategory");
     const supabase = window.supabaseClient;
@@ -241,8 +241,11 @@ const priceInput = document.getElementById("price");
   }
 
   async function loadHistory() {
+  const historyList = document.getElementById("historyList");
     const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("*");
+  if (!data) return;
+  loadOptions(data);
     const container = document.getElementById("historyList");
     if (!data) {
       container.textContent = "履歴の取得に失敗しました。";
@@ -333,6 +336,7 @@ const priceInput = document.getElementById("price");
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
+  loadHistory();
   loadOptions();
   loadHistory();
   loadOptions();
