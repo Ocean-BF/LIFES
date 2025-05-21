@@ -370,38 +370,48 @@ document.getElementById("taxOut").addEventListener("click", () => {
 });
 
 
+
 const taxInBtn = document.getElementById("taxIn");
 const taxOutBtn = document.getElementById("taxOut");
+const priceInput = document.getElementById("price");
+const resetButton = document.getElementById("resetButton");
+const unitPriceDisplay = document.getElementById("unitPriceDisplay");
 
 taxInBtn.addEventListener("click", () => {
-  if (!taxInBtn.classList.contains("active")) {
+  if (!taxInBtn.disabled) {
     const value = parseFloat(priceInput.value);
     if (!isNaN(value)) {
       priceInput.value = Math.round(value * 1.1);
       calcUnitPrice();
       taxInBtn.classList.add("active");
+      taxInBtn.disabled = true;
       taxOutBtn.classList.remove("active");
+      taxOutBtn.disabled = false;
     }
   }
 });
 
 taxOutBtn.addEventListener("click", () => {
-  if (!taxOutBtn.classList.contains("active")) {
+  if (!taxOutBtn.disabled) {
     const value = parseFloat(priceInput.value);
     if (!isNaN(value)) {
       priceInput.value = Math.round(value / 1.1);
       calcUnitPrice();
       taxOutBtn.classList.add("active");
+      taxOutBtn.disabled = true;
       taxInBtn.classList.remove("active");
+      taxInBtn.disabled = false;
     }
   }
 });
 
-document.getElementById("resetButton").addEventListener("click", () => {
+resetButton.addEventListener("click", () => {
   document.getElementById("unitForm").reset();
-  document.getElementById("unitPriceDisplay").textContent = "-- 円";
+  unitPriceDisplay.textContent = "-- 円";
   taxInBtn.classList.remove("active");
   taxOutBtn.classList.remove("active");
+  taxInBtn.disabled = false;
+  taxOutBtn.disabled = false;
 });
 
 </script>
