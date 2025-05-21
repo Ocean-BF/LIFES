@@ -96,7 +96,7 @@
 
 
 <script>
-  const priceInput = document.getElementById("price");
+const priceInput = document.getElementById("price");
   const quantityInput = document.getElementById("quantity");
   const volumeInput = document.getElementById("volume");
   const unitPriceDisplay = document.getElementById("unitPriceDisplay");
@@ -108,10 +108,10 @@
     const volume = parseFloat(volumeInput.value || 1);
     if (!isNaN(price) && quantity > 0 && volume > 0) {
       const unit = price / quantity / volume;
-      unitPriceDisplay.textContent = `${unit.toFixed(1)} 円`;
+      unitPriceDisplay.textContent = `単価：${unit.toFixed(1)} 円`;
       return unit;
     }
-    unitPriceDisplay.textContent = "-- 円";
+    unitPriceDisplay.textContent = "単価：-- 円";
     return null;
   }
 
@@ -182,7 +182,8 @@
       status.textContent = "登録しました。";
       document.getElementById("unitForm").reset();
       calcUnitPrice();
-      loadHistory();  // 復活（候補リスト読み込み）
+      loadHistory();
+      loadOptions();
     }
   });
 
@@ -285,7 +286,8 @@
               shop_name: inputs[1].value,
               unit_price: parseFloat(inputs[2].value)
             }).eq("item_name", item);
-            loadHistory();  // 復活（候補リスト読み込み）
+            loadHistory();
+          });
           tr.querySelector(".cancel-btn").addEventListener("click", loadHistory);
         });
 
@@ -293,7 +295,8 @@
           deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
           const supabase = window.supabaseClient;
           await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
-          loadHistory();  // 復活（候補リスト読み込み）
+          loadHistory();
+        });
 
       });
       table.appendChild(tbody);
@@ -315,7 +318,8 @@
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
     loadOptions();
-    loadHistory();  // 復活（候補リスト読み込み）
+    loadHistory();
+  });
 
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
@@ -332,73 +336,12 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
       .eq("item_name", deleteTarget.item)
       .eq("created_at", deleteTarget.created_at);
     document.getElementById("deleteModal").style.display = "none";
-    loadHistory();  // 復活（候補リスト読み込み）
+    loadHistory();
+  }
 });
 document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
   document.getElementById("deleteModal").style.display = "none";
 });
-
-
-document.getElementById("taxIn").addEventListener("click", () => {
-  const input = document.getElementById("price");
-  const value = parseFloat(input.value);
-  if (!isNaN(value)) {
-    const taxOut = Math.round(value / 1.1);
-    const expected = Math.round(taxOut * 1.1);
-    if (value !== expected) {
-      input.value = expected;
-      calcUnitPrice();
-    }
-  }
-});
-
-document.getElementById("taxOut").addEventListener("click", () => {
-  const input = document.getElementById("price");
-  const value = parseFloat(input.value);
-  if (!isNaN(value)) {
-    const taxOut = Math.round(value / 1.1);
-    if (Math.round(taxOut * 1.1) === value) {
-      input.value = taxOut;
-      calcUnitPrice();
-    }
-  }
-});
-
-
-const taxInBtn = document.getElementById("taxIn");
-const taxOutBtn = document.getElementById("taxOut");
-
-taxInBtn.addEventListener("click", () => {
-  if (!taxInBtn.classList.contains("active")) {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) {
-      priceInput.value = Math.round(value * 1.1);
-      calcUnitPrice();
-      taxInBtn.classList.add("active");
-      taxOutBtn.classList.remove("active");
-    }
-  }
-});
-
-taxOutBtn.addEventListener("click", () => {
-  if (!taxOutBtn.classList.contains("active")) {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) {
-      priceInput.value = Math.round(value / 1.1);
-      calcUnitPrice();
-      taxOutBtn.classList.add("active");
-      taxInBtn.classList.remove("active");
-    }
-  }
-});
-
-document.getElementById("resetButton").addEventListener("click", () => {
-  document.getElementById("unitForm").reset();
-  document.getElementById("unitPriceDisplay").textContent = "-- 円";
-  taxInBtn.classList.remove("active");
-  taxOutBtn.classList.remove("active");
-});
-
 </script>
 <style>
   body {
