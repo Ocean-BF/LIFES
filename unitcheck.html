@@ -8,7 +8,7 @@
 <div id="formSection" class="section">
   <form id="unitForm">
     <div class="row">
-      <label for="item_name">商品名</label>
+      <div class="row"><div class="col label">商品名</div><div class="col input"><input id="item_name"></div><div class="col button"><button class="dropdown-btn" data-target="item_name">▼</button></div></div>
       <div class="input-combo">
         <input list="item_list" id="item_name" name="item_name" required>
         <button type="button" class="dropdown-btn" data-target="item_name">▼</button>
@@ -16,7 +16,7 @@
       <datalist id="item_list"></datalist>
     </div>
     <div class="row">
-      <label for="category">カテゴリ</label>
+      <div class="row"><div class="col label">カテゴリ</div><div class="col input"><input id="category"></div><div class="col button"><button class="dropdown-btn" data-target="category">▼</button></div></div>
       <div class="input-combo">
         <input list="category_list" id="category" name="category">
         <button type="button" class="dropdown-btn" data-target="category">▼</button>
@@ -24,19 +24,19 @@
       <datalist id="category_list"></datalist>
     </div>
     <div class="row">
-      <label for="price">価格</label>
+      <div class="row"><div class="col label">価格</div><div class="col input"><input id="price"></div><div class="col button"></div></div>
       <input id="price" required>
     </div>
     <div class="row">
-      <label for="quantity">数量</label>
+      <div class="row"><div class="col label">数量</div><div class="col input"><input id="quantity" value="1"></div><div class="col button"></div></div>
       <input id="quantity" value="1" required>
     </div>
     <div class="row">
-      <label for="volume">内容量</label>
+      <div class="row"><div class="col label">内容量</div><div class="col input"><input id="volume" value="1"></div><div class="col button"></div></div>
       <input id="volume" value="1" required>
     </div>
     <div class="row">
-      <label for="shop_name">店名</label>
+      <div class="row"><div class="col label">店名</div><div class="col input"><input id="shop_name"></div><div class="col button"><button class="dropdown-btn" data-target="shop_name">▼</button></div></div>
       <div class="input-combo">
         <input list="shop_list" id="shop_name" name="shop_name">
         <button type="button" class="dropdown-btn" data-target="shop_name">▼</button>
@@ -560,28 +560,27 @@ label {
   align-items: center;
   margin: 6px 4px;
   gap: 6px;
-  flex-wrap: nowrap;
 }
-label {
+.col.label {
   width: 35%;
-  font-size: 1.1rem;
   font-weight: bold;
+  font-size: 1.1rem;
 }
-.input-combo,
-.input-only {
-  width: 65%;
+.col.input {
+  width: 55%;
 }
-.input-combo {
-  display: flex;
+.col.button {
+  width: 10%;
+  text-align: right;
 }
-.input-combo input {
-  flex: 1;
-  min-width: 0;
+.col.button button {
+  width: 100%;
+  padding: 4px 6px;
+}
+.col.input input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
 }
 
-
-.input-only {
-  flex: 1;
-  min-width: 0;
-}
 </style>
