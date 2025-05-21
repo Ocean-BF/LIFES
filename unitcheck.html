@@ -75,7 +75,7 @@
     <select id="filterCategory"><option value="">すべて</option></select>
   </div>
   <div id="historyListWrapper">
-    <div id="historyList">履歴を読み込み中...</div>
+    
   </div>
 </div>
 
@@ -182,8 +182,7 @@
       status.textContent = "登録しました。";
       document.getElementById("unitForm").reset();
       calcUnitPrice();
-      loadHistory();
-      loadOptions();
+      // loadHistory();  // 無効化loadOptions();
     }
   });
 
@@ -286,8 +285,7 @@
               shop_name: inputs[1].value,
               unit_price: parseFloat(inputs[2].value)
             }).eq("item_name", item);
-            loadHistory();
-          });
+            // loadHistory();  // 無効化});
           tr.querySelector(".cancel-btn").addEventListener("click", loadHistory);
         });
 
@@ -295,8 +293,7 @@
           deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
           const supabase = window.supabaseClient;
           await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
-          loadHistory();
-        });
+          // loadHistory();  // 無効化});
 
       });
       table.appendChild(tbody);
@@ -318,8 +315,7 @@
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
     loadOptions();
-    loadHistory();
-  });
+    // loadHistory();  // 無効化});
 
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
@@ -336,8 +332,7 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
       .eq("item_name", deleteTarget.item)
       .eq("created_at", deleteTarget.created_at);
     document.getElementById("deleteModal").style.display = "none";
-    loadHistory();
-  }
+    // loadHistory();  // 無効化}
 });
 document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
   document.getElementById("deleteModal").style.display = "none";
