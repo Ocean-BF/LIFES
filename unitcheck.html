@@ -335,6 +335,8 @@ const priceInput = document.getElementById("price");
   document.getElementById("historyTab").addEventListener("click", () => {
   loadOptions();
   loadHistory();
+  loadOptions();
+  loadHistory();
     document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
@@ -380,6 +382,23 @@ document.getElementById("resetButton").addEventListener("click", () => {
       calcUnitPrice();
     }
   });
+
+
+function setSelectOptions(id, values) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "すべて";
+  el.appendChild(allOption);
+  [...new Set(values)].forEach(v => {
+    const option = document.createElement("option");
+    option.value = v;
+    option.textContent = v;
+    el.appendChild(option);
+  });
+}
 
 </script>
 <style>
