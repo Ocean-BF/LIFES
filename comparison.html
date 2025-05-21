@@ -1,0 +1,138 @@
+<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>価格比較</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .item.highlight {
+      border: 2px solid #007bff;
+    }
+    .field {
+      margin-bottom: 0.8rem;
+    }
+    .field label {
+      font-size: 1.1rem;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .field input {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1.2rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    .unit-price {
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    button#addItem {
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>価格比較</h1>
+  <div id="itemsContainer"></div>
+  <button id="addItem">＋ 商品を追加</button>
+
+  <script>
+    function createItem() {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div class="field">
+          <label>価格（円）</label>
+          <input type="number" class="price" min="0" step="any" />
+        </div>
+        <div class="field">
+          <label>個数</label>
+          <input type="number" class="quantity" min="1" value="1" />
+        </div>
+        <div class="field">
+          <label>内容量</label>
+          <input type="number" class="volume" min="1" value="1" />
+        </div>
+        <div class="unit-price">-- 円</div>
+      `;
+      return div;
+    }
+
+    function calcAll() {
+      const items = document.querySelectorAll(".item");
+      let cheapest = Infinity;
+      let cheapestIndex = -1;
+
+      items.forEach((item, index) => {
+        const price = parseFloat(item.querySelector(".price").value);
+        const quantity = parseFloat(item.querySelector(".quantity").value);
+        const volume = parseFloat(item.querySelector(".volume").value);
+        const display = item.querySelector(".unit-price");
+
+        if (!isNaN(price) && quantity > 0 && volume > 0) {
+          const unit = price / quantity / volume;
+          display.textContent = unit.toFixed(1) + " 円";
+          if (unit < cheapest) {
+            cheapest = unit;
+            cheapestIndex = index;
+          }
+        } else {
+          display.textContent = "-- 円";
+        }
+      });
+
+      items.forEach((item, idx) => {
+        item.classList.toggle("highlight", idx === cheapestIndex);
+      });
+    }
+
+    function addItem() {
+      const container = document.getElementById("itemsContainer");
+      const item = createItem();
+      container.appendChild(item);
+      item.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", calcAll);
+      });
+      calcAll();
+    }
+
+    document.getElementById("addItem").addEventListener("click", addItem);
+
+    // 初期2件追加
+    addItem();
+    addItem();
+  </script>
+</body>
+</html>
