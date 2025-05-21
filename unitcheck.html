@@ -127,14 +127,7 @@ const priceInput = document.getElementById("price");
   quantityInput.addEventListener("input", calcUnitPrice);
   volumeInput.addEventListener("input", calcUnitPrice);
 
-  document.getElementById("taxIn").addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
-    calcUnitPrice();
-  });
-
-  document.getElementById("taxOut").addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
+  
     if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
     calcUnitPrice();
   });
@@ -356,6 +349,31 @@ document.getElementById("resetButton").addEventListener("click", () => {
   calcUnitPrice();
   status.textContent = "";
 });
+
+
+  function setTaxButtonsState(activeButton, inactiveButton) {
+    activeButton.classList.add("active");
+    activeButton.disabled = true;
+    inactiveButton.classList.remove("active");
+    inactiveButton.disabled = false;
+  }
+
+  const taxInBtn = document.getElementById("taxIn");
+  const taxOutBtn = document.getElementById("taxOut");
+
+  taxInBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
+    calcUnitPrice();
+    setTaxButtonsState(taxInBtn, taxOutBtn);
+  });
+
+  taxOutBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
+    calcUnitPrice();
+    setTaxButtonsState(taxOutBtn, taxInBtn);
+  });
 
 </script>
 <style>
