@@ -335,7 +335,9 @@ const priceInput = document.getElementById("price");
   document.getElementById("historyTab").addEventListener("click", () => {
   loadOptions();
   loadHistory();
-document.getElementById("formSection").style.display = "none";
+  loadOptions();
+  loadHistory();
+    document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
     document.getElementById("historyTab").classList.add("active");
