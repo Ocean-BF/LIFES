@@ -207,12 +207,12 @@ const priceInput = document.getElementById("price");
   async function loadOptions() {
   const itemSelect = document.getElementById("filterItem");
   const catSelect = document.getElementById("filterCategory");
-  const items = [...new Set(window.unitData.map(r => r.item_name).filter(Boolean))];
-  const cats = [...new Set(window.unitData.map(r => r.category).filter(Boolean))];
+  const items = [...new Set(window.unitData.map(r => r.item_name).filter(Boolean))];[...new Set(data.map(r => r.item_name).filter(Boolean))];
+    const cats = [...new Set(window.unitData.map(r => r.category).filter(Boolean))];
     const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];
     const setDatalist = (id, values) => {
       const el = document.getElementById(id);
-      el.innerHTML = "";
+      while (el.firstChild) { el.removeChild(el.firstChild); }
       values.forEach(v => {
         const option = document.createElement("option");
         option.value = v;
@@ -240,7 +240,6 @@ const priceInput = document.getElementById("price");
   async function loadHistory() {
     const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("*");
-  window.unitData = data;
     const container = document.getElementById("historyList");
     if (!data) {
       container.textContent = "履歴の取得に失敗しました。";
@@ -330,16 +329,18 @@ const priceInput = document.getElementById("price");
     document.getElementById("historyTab").classList.remove("active");
   });
 
-  
-document.getElementById("historyTab").addEventListener("click", () => {
+  document.getElementById("historyTab").addEventListener("click", () => {
   loadOptions();
   loadHistory();
-  document.getElementById("formSection").style.display = "none";
-  document.getElementById("historySection").style.display = "";
-  document.getElementById("formTab").classList.remove("active");
-  document.getElementById("historyTab").classList.add("active");
-});
-);
+  loadOptions();
+  loadHistory();
+    document.getElementById("formSection").style.display = "none";
+    document.getElementById("historySection").style.display = "";
+    document.getElementById("formTab").classList.remove("active");
+    document.getElementById("historyTab").classList.add("active");
+    loadOptions();
+    loadHistory();
+  });
 
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
@@ -383,7 +384,7 @@ document.getElementById("resetButton").addEventListener("click", () => {
 function setSelectOptions(id, values) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.innerHTML = "";
+  while (el.firstChild) { el.removeChild(el.firstChild); }
   const allOption = document.createElement("option");
   allOption.value = "";
   allOption.textContent = "すべて";
@@ -397,19 +398,61 @@ function setSelectOptions(id, values) {
 }
 
 
-function setFilter(id, values) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.innerHTML = "";
-  const allOption = document.createElement("option");
-  allOption.value = "";
-  allOption.textContent = "すべて";
-  el.appendChild(allOption);
-  [...new Set(values)].forEach(v => {
-    const option = document.createElement("option");
-    option.value = v;
-    option.textContent = v;
-    el.appendChild(option);
+async function loadHistory() {
+  let historyList = document.getElementById("historyList");
+  if (!historyList) {
+    const wrapper = document.getElementById("historyListWrapper");
+    historyList = document.createElement("div");
+    historyList.id = "historyList";
+    wrapper.appendChild(historyList);
+  }
+  historyList.innerHTML = "";
+
+  const { data } = await supabase.from("unit_prices").select("*");
+  if (!data) return;
+  window.unitData = data;
+
+  const filterItem = document.getElementById("filterItem").value;
+  const filterCategory = document.getElementById("filterCategory").value;
+  const filtered = data.filter(r => {
+    if (filterItem && r.item_name !== filterItem) return false;
+    if (filterCategory && r.category !== filterCategory) return false;
+    return true;
+  });
+
+  const grouped = {};
+  filtered.forEach(r => {
+    if (!grouped[r.item_name]) grouped[r.item_name] = [];
+    grouped[r.item_name].push(r);
+  });
+
+  Object.entries(grouped).forEach(([item, records]) => {
+    const wrapper = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = item;
+    wrapper.appendChild(title);
+
+    const table = document.createElement("table");
+    table.className = "history-table";
+    const thead = document.createElement("thead");
+    thead.innerHTML = "<tr><th>カテゴリ</th><th>店名</th><th>価格</th><th>登録日</th></tr>";
+    table.appendChild(thead);
+    const tbody = document.createElement("tbody");
+
+    records.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.category || ""}</td>
+        <td>${r.shop_name || ""}</td>
+        <td>${r.price || ""}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    historyList.appendChild(wrapper);
   });
 }
 
