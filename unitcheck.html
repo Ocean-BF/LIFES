@@ -120,7 +120,7 @@ const priceInput = document.getElementById("price");
 
   priceInput.addEventListener("input", calcUnitPrice);
   quantityInput.addEventListener("input", calcUnitPrice);
-  volumeInput.addEventListener("input", calcUnitPrice);});
+  volumeInput.addEventListener("input", calcUnitPrice);
 
   const dropdownButtons = document.querySelectorAll(".dropdown-btn");
   const modal = document.getElementById("modal");
@@ -360,7 +360,7 @@ document.getElementById("resetButton").addEventListener("click", () => {
       calcUnitPrice();
       setTaxButtonsState(taxInBtn, taxOutBtn);
     }
-  }););
+  });
 
   taxOutBtn.addEventListener("click", () => {
     const value = parseFloat(priceInput.value);
@@ -369,7 +369,7 @@ document.getElementById("resetButton").addEventListener("click", () => {
       calcUnitPrice();
       setTaxButtonsState(taxOutBtn, taxInBtn);
     }
-  }););
+  });
 
 </script>
 <style>
