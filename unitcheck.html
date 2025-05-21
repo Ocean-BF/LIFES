@@ -108,10 +108,10 @@
     const volume = parseFloat(volumeInput.value || 1);
     if (!isNaN(price) && quantity > 0 && volume > 0) {
       const unit = price / quantity / volume;
-      unitPriceDisplay.textContent = `単価：${unit.toFixed(1)} 円`;
+      unitPriceDisplay.textContent = `${unit.toFixed(1)} 円`;
       return unit;
     }
-    unitPriceDisplay.textContent = "単価：-- 円";
+    unitPriceDisplay.textContent = "-- 円";
     return null;
   }
 
@@ -367,6 +367,42 @@ document.getElementById("taxOut").addEventListener("click", () => {
       calcUnitPrice();
     }
   }
+});
+
+
+const taxInBtn = document.getElementById("taxIn");
+const taxOutBtn = document.getElementById("taxOut");
+const priceInput = document.getElementById("price");
+
+taxInBtn.addEventListener("click", () => {
+  if (!taxInBtn.classList.contains("active")) {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value * 1.1);
+      calcUnitPrice();
+      taxInBtn.classList.add("active");
+      taxOutBtn.classList.remove("active");
+    }
+  }
+});
+
+taxOutBtn.addEventListener("click", () => {
+  if (!taxOutBtn.classList.contains("active")) {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value / 1.1);
+      calcUnitPrice();
+      taxOutBtn.classList.add("active");
+      taxInBtn.classList.remove("active");
+    }
+  }
+});
+
+document.getElementById("resetButton").addEventListener("click", () => {
+  document.getElementById("unitForm").reset();
+  document.getElementById("unitPriceDisplay").textContent = "-- 円";
+  taxInBtn.classList.remove("active");
+  taxOutBtn.classList.remove("active");
 });
 
 </script>
@@ -658,6 +694,13 @@ label {
   display: flex;
   gap: 10px;
   margin: 10px 0;
+}
+
+
+button.active {
+  background-color: #aaa;
+  color: white;
+  cursor: not-allowed;
 }
 
 </style>
