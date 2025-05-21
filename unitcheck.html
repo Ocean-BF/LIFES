@@ -62,23 +62,15 @@
   
 <div class="filter-row">
   <div class="row">
-    <label>商品名</label>
-    <select id="filterItem"><option value="">すべて</option></select>
-  </div>
-  <div class="row">
-    <label>カテゴリ</label>
-    <select id="filterCategory"><option value="">すべて</option></select>
+    
   </div>
 </div>
 
-    <label>商品名</label>
-    <select id="filterItem"><option value="">すべて</option></select>
-    <label>カテゴリ</label>
-    <select id="filterCategory"><option value="">すべて</option></select>
-  </div>
-  <div id="historyListWrapper">
     
   </div>
+  <div id="historyListWrapper">
+  <div id="historyList"></div>
+</div>
 </div>
 
 <!-- モーダル -->
@@ -327,6 +319,8 @@ const priceInput = document.getElementById("price");
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
+  loadOptions();
+  loadHistory();
     document.getElementById("formSection").style.display = "none";
     document.getElementById("historySection").style.display = "";
     document.getElementById("formTab").classList.remove("active");
