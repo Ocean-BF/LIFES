@@ -205,6 +205,8 @@ const priceInput = document.getElementById("price");
   });
 
   async function loadOptions() {
+  const itemSelect = document.getElementById("filterItem");
+  const catSelect = document.getElementById("filterCategory");
     const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
     if (!data) return;
@@ -323,6 +325,7 @@ const priceInput = document.getElementById("price");
   }
 
   document.getElementById("formTab").addEventListener("click", () => {
+  document.getElementById("historyListWrapper").innerHTML = "";
     document.getElementById("formSection").style.display = "";
     document.getElementById("historySection").style.display = "none";
     document.getElementById("formTab").classList.add("active");
@@ -738,4 +741,11 @@ button.btn-reset, button.btn-submit {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
+
+.history-table td:nth-child(4),
+.history-table th:nth-child(4) {
+  min-width: 100px;
+  white-space: nowrap;
+}
+
 </style>
