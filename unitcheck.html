@@ -343,6 +343,32 @@ document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
   document.getElementById("deleteModal").style.display = "none";
 });
 
+
+document.getElementById("taxIn").addEventListener("click", () => {
+  const input = document.getElementById("price");
+  const value = parseFloat(input.value);
+  if (!isNaN(value)) {
+    const taxOut = Math.round(value / 1.1);
+    const expected = Math.round(taxOut * 1.1);
+    if (value !== expected) {
+      input.value = expected;
+      calcUnitPrice();
+    }
+  }
+});
+
+document.getElementById("taxOut").addEventListener("click", () => {
+  const input = document.getElementById("price");
+  const value = parseFloat(input.value);
+  if (!isNaN(value)) {
+    const taxOut = Math.round(value / 1.1);
+    if (Math.round(taxOut * 1.1) === value) {
+      input.value = taxOut;
+      calcUnitPrice();
+    }
+  }
+});
+
 </script>
 <style>
   body {
