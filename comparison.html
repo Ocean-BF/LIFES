@@ -1,4 +1,4 @@
-<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ -->
+<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v2 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -8,80 +8,100 @@
   <style>
     body {
       font-family: sans-serif;
-      background: #f5f5f5;
+      background: #f0f4f8;
       margin: 0;
       padding: 1rem;
     }
-    h1 {
-      font-size: 1.5rem;
-      text-align: center;
-      margin-bottom: 1rem;
+    .items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
     .item {
       background: #fff;
       border-radius: 10px;
       padding: 1rem;
-      margin-bottom: 1rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     .item.highlight {
-      border: 2px solid #007bff;
+      border: 3px solid #007bff;
     }
-    .field {
+    .item-title {
+      font-size: 1.2rem;
+      font-weight: bold;
       margin-bottom: 0.8rem;
     }
-    .field label {
-      font-size: 1.1rem;
-      display: block;
-      margin-bottom: 0.3rem;
+    .row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.6rem;
     }
-    .field input {
-      width: 100%;
-      padding: 0.6rem;
+    .row label {
+      width: 30%;
+      font-size: 1.1rem;
+    }
+    .row input {
+      width: 70%;
       font-size: 1.2rem;
+      padding: 0.5rem;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
     }
     .unit-price {
       font-size: 1.4rem;
       font-weight: bold;
       text-align: center;
-      margin-top: 0.5rem;
+      margin-top: 0.6rem;
     }
-    button#addItem {
-      width: 100%;
+    .buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    button {
+      flex: 1;
       padding: 0.8rem;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: bold;
-      background: #007bff;
-      color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    #addItem {
+      background: #007bff;
+      color: white;
+    }
+    #resetAll {
+      background: #ccc;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>価格比較</h1>
-  <div id="itemsContainer"></div>
-  <button id="addItem">＋ 商品を追加</button>
+  <div class="items-container" id="itemsContainer"></div>
+  <div class="buttons">
+    <button id="addItem">＋ 商品を追加</button>
+    <button id="resetAll">リセット</button>
+  </div>
 
   <script>
+    let itemCount = 0;
+
     function createItem() {
+      itemCount++;
       const div = document.createElement("div");
       div.className = "item";
       div.innerHTML = `
-        <div class="field">
+        <div class="item-title">商品${String.fromCharCode(64 + itemCount)}</div>
+        <div class="row">
           <label>価格（円）</label>
           <input type="number" class="price" min="0" step="any" />
         </div>
-        <div class="field">
+        <div class="row">
           <label>個数</label>
           <input type="number" class="quantity" min="1" value="1" />
         </div>
-        <div class="field">
+        <div class="row">
           <label>内容量</label>
           <input type="number" class="volume" min="1" value="1" />
         </div>
@@ -128,9 +148,17 @@
       calcAll();
     }
 
-    document.getElementById("addItem").addEventListener("click", addItem);
+    function resetAll() {
+      document.getElementById("itemsContainer").innerHTML = "";
+      itemCount = 0;
+      addItem();
+      addItem();
+    }
 
-    // 初期2件追加
+    document.getElementById("addItem").addEventListener("click", addItem);
+    document.getElementById("resetAll").addEventListener("click", resetAll);
+
+    // 初期2件
     addItem();
     addItem();
   </script>
