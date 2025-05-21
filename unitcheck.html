@@ -69,11 +69,15 @@
     <select id="filterCategory"><option value="">すべて</option></select>
   </div>
 </div>
-  
-  <div id="historyListWrapper">
-    <div id="historyList"></div>
+
+    <label>商品名</label>
+    <select id="filterItem"><option value="">すべて</option></select>
+    <label>カテゴリ</label>
+    <select id="filterCategory"><option value="">すべて</option></select>
   </div>
-</div>
+  <div id="historyListWrapper">
+    
+  </div>
 </div>
 
 <!-- モーダル -->
@@ -122,6 +126,18 @@ const priceInput = document.getElementById("price");
   priceInput.addEventListener("input", calcUnitPrice);
   quantityInput.addEventListener("input", calcUnitPrice);
   volumeInput.addEventListener("input", calcUnitPrice);
+
+  document.getElementById("taxIn").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
+    calcUnitPrice();
+  });
+
+  document.getElementById("taxOut").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
+    calcUnitPrice();
+  });
 
   const dropdownButtons = document.querySelectorAll(".dropdown-btn");
   const modal = document.getElementById("modal");
@@ -223,11 +239,9 @@ const priceInput = document.getElementById("price");
     }
     const filterItem = document.getElementById("filterItem").value;
     const filterCategory = document.getElementById("filterCategory").value;
-    const filtered = data.filter(r => {
-      if (filterItem.trim() && r.item_name !== filterItem.trim()) return false;
-      if (filterCategory.trim() && r.category !== filterCategory.trim()) return false;
-      return true;
-    }
+    const filtered = data.filter(r =>
+      (!filterItem || r.item_name === filterItem) &&
+      (!filterCategory || r.category === filterCategory)
     );
     if (filtered.length === 0) {
       container.textContent = "登録された履歴がありません。";
@@ -343,38 +357,7 @@ document.getElementById("resetButton").addEventListener("click", () => {
   status.textContent = "";
 });
 
-
-  function setTaxButtonsState(activeButton, inactiveButton) {
-    activeButton.classList.add("active");
-    activeButton.disabled = true;
-    inactiveButton.classList.remove("active");
-    inactiveButton.disabled = false;
-  }
-
-  const taxInBtn = document.getElementById("taxIn");
-  const taxOutBtn = document.getElementById("taxOut");
-
-  taxInBtn.addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) {
-      priceInput.value = Math.round(value * 1.1);
-      calcUnitPrice();
-      setTaxButtonsState(taxInBtn, taxOutBtn);
-    }
-  });
-
-  taxOutBtn.addEventListener("click", () => {
-    const value = parseFloat(priceInput.value);
-    if (!isNaN(value)) {
-      priceInput.value = Math.round(value / 1.1);
-      calcUnitPrice();
-      setTaxButtonsState(taxOutBtn, taxInBtn);
-    }
-  });
-    }
-  });
-
-  </script>
+</script>
 <style>
   body {
     font-family: sans-serif;
@@ -456,7 +439,6 @@ document.getElementById("resetButton").addEventListener("click", () => {
   }
 
   .buttons button,
-.buttons button.active { background-color: #aaa !important; color: white !important; cursor: not-allowed; }
   
 
   
@@ -735,31 +717,4 @@ button.btn-reset, button.btn-submit {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
-
-#deleteModal .modal-content {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  width: 300px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-#deleteModal button {
-  margin: 10px;
-  padding: 8px 16px;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-}
-#confirmDeleteBtn {
-  background: #e74c3c;
-  color: white;
-}
-#cancelDeleteBtn {
-  background: #bdc3c7;
-  color: #333;
-}
-
 </style>
