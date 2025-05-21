@@ -350,6 +350,13 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
 document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
   document.getElementById("deleteModal").style.display = "none";
 });
+
+document.getElementById("resetButton").addEventListener("click", () => {
+  document.getElementById("unitForm").reset();
+  calcUnitPrice();
+  status.textContent = "";
+});
+
 </script>
 <style>
   body {
