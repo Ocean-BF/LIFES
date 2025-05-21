@@ -154,8 +154,7 @@ const priceInput = document.getElementById("price");
           currentTargetInput.value = v;
           modal.style.display = "none";
         });
-        modalList.appendChild(li);
-      });
+        modalList.appendChild(li););
       modal.style.display = "block";
     });
   });
@@ -201,8 +200,7 @@ const priceInput = document.getElementById("price");
       values.forEach(v => {
         const option = document.createElement("option");
         option.value = v;
-        el.appendChild(option);
-      });
+        el.appendChild(option););
     };
     setDatalist("item_list", items);
     setDatalist("category_list", cats);
@@ -215,8 +213,7 @@ const priceInput = document.getElementById("price");
         const option = document.createElement("option");
         option.value = v;
         option.textContent = v;
-        el.appendChild(option);
-      });
+        el.appendChild(option););
     };
     setFilter("filterItem", items);
     setFilter("filterCategory", cats);
@@ -302,8 +299,7 @@ const priceInput = document.getElementById("price");
       });
       table.appendChild(tbody);
       wrapper.appendChild(table);
-      container.appendChild(wrapper);
-    });
+      container.appendChild(wrapper););
   }
 
   document.getElementById("formTab").addEventListener("click", () => {
