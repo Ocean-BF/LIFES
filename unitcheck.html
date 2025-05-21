@@ -46,7 +46,6 @@
   <div class="row buttons">
     <button type="button" id="taxIn">税込</button>
     <button type="button" id="taxOut">税抜</button>
-    <button type="button" id="taxReset">非課税</button>
   </div>
   <div class="row submit-row">
   <button type="button" id="resetButton" class="btn-reset">リセット</button>
@@ -94,23 +93,17 @@
 
 
 <script>
+
 const supabaseClient = supabase.createClient(
   'https://mzuqsfoqkaopxhyggwyk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0'
 );
 let selectedTax = null;
 
-
 const priceInput = document.getElementById("price");
-const quantityInput = document.getElementById("quantity");
-const volumeInput = document.getElementById("volume");
-const unitPriceDisplay = document.getElementById("unitPriceDisplay");
-const status = document.getElementById("status");
-const taxInBtn = document.getElementById("taxIn");
-const taxOutBtn = document.getElementById("taxOut");
-const taxResetBtn = document.getElementById("taxReset");
-let originalPrice = null;
-
+  const quantityInput = document.getElementById("quantity");
+  const volumeInput = document.getElementById("volume");
+  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
   const status = document.getElementById("status");
 
   function calcUnitPrice() {
@@ -126,10 +119,7 @@ let originalPrice = null;
     return null;
   }
 
-  priceInput.addEventListener("input", () => {
-  originalPrice = parseFloat(priceInput.value);
-  calcUnitPrice();
-});
+  priceInput.addEventListener("input", calcUnitPrice);
   quantityInput.addEventListener("input", calcUnitPrice);
   volumeInput.addEventListener("input", calcUnitPrice);
 
@@ -190,21 +180,8 @@ let originalPrice = null;
   });
 
   async function loadOptions() {
-
     const supabase = window.supabaseClient;
-    let data;
-try {
-  const res = await supabase.from("unit_prices").select("item_name, category, shop_name");
-  data = res.data;
-  if (!data) {
-    console.error("データ取得に失敗しました");
-    return;
-  }
-} catch (err) {
-  console.error("loadOptions エラー:", err);
-  return;
-}
-("unit_prices").select("item_name, category, shop_name");
+    const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
     if (!data) return;
     const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
     const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
@@ -216,7 +193,7 @@ try {
         const option = document.createElement("option");
         option.value = v;
         el.appendChild(option);
-    });
+      });
     };
     setDatalist("item_list", items);
     setDatalist("category_list", cats);
@@ -230,7 +207,7 @@ try {
         option.value = v;
         option.textContent = v;
         el.appendChild(option);
-    });
+      });
     };
     setFilter("filterItem", items);
     setFilter("filterCategory", cats);
@@ -309,15 +286,17 @@ try {
         });
 
         tr.querySelector(".delete-btn").addEventListener("click", async () => {
-          deleteTarget = { item, created_at: r.created_at };
-          document.getElementById("deleteModal").style.display = "flex";
+          deleteTarget = { item, created_at: r.created_at }; document.getElementById("deleteModal").style.display = "flex";
+          const supabase = window.supabaseClient;
+          await supabase.from("unit_prices").delete().eq("item_name", item).eq("created_at", r.created_at);
+          loadHistory();
         });
 
       });
       table.appendChild(tbody);
       wrapper.appendChild(table);
       container.appendChild(wrapper);
-  });
+    });
   }
 
   document.getElementById("formTab").addEventListener("click", () => {
@@ -339,6 +318,7 @@ try {
   document.getElementById("filterItem").addEventListener("change", loadHistory);
   document.getElementById("filterCategory").addEventListener("change", loadHistory);
   window.addEventListener("DOMContentLoaded", () => {
+    loadOptions();
     calcUnitPrice();
   });
 
@@ -365,73 +345,44 @@ document.getElementById("unitForm").reset();
 });
 
 
+  function setTaxButtonsState(activeButton, inactiveButton) {
+    activeButton.classList.add("active");
+    activeButton.disabled = true;
+    inactiveButton.classList.remove("active");
+    inactiveButton.disabled = false;
   }
-  });
 
-  
+  const taxInBtn = document.getElementById("taxIn");
+  const taxOutBtn = document.getElementById("taxOut");
+
+  taxInBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value * 1.1);
+      calcUnitPrice();
+      setTaxButtonsState(taxInBtn, taxOutBtn);
     }
   });
 
-  
+  taxOutBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value / 1.1);
+      calcUnitPrice();
+      setTaxButtonsState(taxOutBtn, taxInBtn);
+    }
+  });
+    }
+  });
 
-
-
-function setTaxButtonsState(activeButton, other1, other2) {
-  activeButton.classList.add("active");
-  activeButton.disabled = true;
-  other1.classList.remove("active");
-  other1.disabled = false;
-  other2.classList.remove("active");
-  other2.disabled = false;
-}
-
-function calculateTax(price, rate) {
-  const value = parseFloat(price);
-  return !isNaN(value) ? Math.round(value * rate) : null;
-}
-
-const taxInBtn = document.getElementById("taxIn");
-const taxOutBtn = document.getElementById("taxOut");
-const taxResetBtn = document.getElementById("taxReset");
-
-taxInBtn.addEventListener("click", () => {
-  const taxed = calculateTax(priceInput.value, 1.1);
-  if (taxed !== null) {
-    priceInput.value = taxed;
-    calcUnitPrice();
-    setTaxButtonsState(taxInBtn, taxOutBtn, taxResetBtn);
-  }
-});
-
-taxOutBtn.addEventListener("click", () => {
-  const untaxed = calculateTax(priceInput.value, 1 / 1.1);
-  if (untaxed !== null) {
-    priceInput.value = untaxed;
-    calcUnitPrice();
-    setTaxButtonsState(taxOutBtn, taxInBtn, taxResetBtn);
-  }
-});
-
-taxResetBtn.addEventListener("click", () => {
-  if (!isNaN(originalPrice)) {
-    priceInput.value = originalPrice;
-    calcUnitPrice();
-    setTaxButtonsState(taxResetBtn, taxInBtn, taxOutBtn);
-  }
-});
-
-  }
-});
-
-
-
-taxResetBtn.addEventListener("click", () => {
-  if (!isNaN(originalPrice)) {
-    priceInput.value = originalPrice;
-    calcUnitPrice();
-    setTaxButtonsState(taxResetBtn, taxInBtn, taxOutBtn);
-  }
-});
+  taxOutBtn.addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) {
+      priceInput.value = Math.round(value / 1.1);
+      calcUnitPrice();
+      setTaxButtonsState(taxOutBtn, taxInBtn);
+    }
+  });
 
 </script>
 <style>
@@ -819,13 +770,6 @@ button.btn-reset, button.btn-submit {
 #cancelDeleteBtn {
   background: #bdc3c7;
   color: #333;
-}
-
-
-.history-table td:nth-child(4),
-.history-table th:nth-child(4) {
-  min-width: 100px;
-  white-space: nowrap;
 }
 
 </style>
