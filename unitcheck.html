@@ -423,6 +423,46 @@ document.getElementById("resetButton").addEventListener("click", () => {
   });
 
 
+
+function setTaxButtonsState(activeButton, other1, other2) {
+  activeButton.classList.add("active");
+  activeButton.disabled = true;
+  other1.classList.remove("active");
+  other1.disabled = false;
+  other2.classList.remove("active");
+  other2.disabled = false;
+}
+
+const taxInBtn = document.getElementById("taxIn");
+const taxOutBtn = document.getElementById("taxOut");
+const taxResetBtn = document.getElementById("taxReset");
+
+taxInBtn.addEventListener("click", () => {
+  const value = parseFloat(priceInput.value);
+  if (!isNaN(value)) {
+    priceInput.value = Math.round(value * 1.1);
+    calcUnitPrice();
+    setTaxButtonsState(taxInBtn, taxOutBtn, taxResetBtn);
+  }
+});
+
+taxOutBtn.addEventListener("click", () => {
+  const value = parseFloat(priceInput.value);
+  if (!isNaN(value)) {
+    priceInput.value = Math.round(value / 1.1);
+    calcUnitPrice();
+    setTaxButtonsState(taxOutBtn, taxInBtn, taxResetBtn);
+  }
+});
+
+taxResetBtn.addEventListener("click", () => {
+  if (!isNaN(originalPrice)) {
+    priceInput.value = originalPrice;
+    calcUnitPrice();
+    setTaxButtonsState(taxResetBtn, taxInBtn, taxOutBtn);
+  }
+});
+
 </script>
 <style>
   body {
