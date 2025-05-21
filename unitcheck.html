@@ -109,12 +109,7 @@ const supabaseClient = supabase.createClient(
 let selectedTax = null;
 
 let originalPrice = null;
-const priceInput = document.getElementById("price");
-  const quantityInput = document.getElementById("quantity");
-  const volumeInput = document.getElementById("volume");
-  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
-  const status = document.getElementById("status");
-
+        
   function calcUnitPrice() {
     const price = parseFloat(priceInput.value);
     const quantity = parseFloat(quantityInput.value || 1);
@@ -148,9 +143,7 @@ const priceInput = document.getElementById("price");
   });
 
   const dropdownButtons = document.querySelectorAll(".dropdown-btn");
-  const modal = document.getElementById("modal");
-  const modalList = document.getElementById("modalList");
-  let currentTargetInput = null;
+      let currentTargetInput = null;
 
   dropdownButtons.forEach(btn => {
     btn.addEventListener("click", async () => {
@@ -204,10 +197,8 @@ const priceInput = document.getElementById("price");
     }
   });
 
-  function loadOptions(data) {
-  const itemSelect = document.getElementById("filterItem");
-  const catSelect = document.getElementById("filterCategory");
-    const supabase = window.supabaseClient;
+  async function loadOptions() {
+        const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
     if (!data) return;
     const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
@@ -241,13 +232,9 @@ const priceInput = document.getElementById("price");
   }
 
   async function loadHistory() {
-  const historyList = document.getElementById("historyList");
     const supabase = window.supabaseClient;
     const { data } = await supabase.from("unit_prices").select("*");
-  if (!data) return;
-  loadOptions(data);
-    const container = document.getElementById("historyList");
-    if (!data) {
+        if (!data) {
       container.textContent = "履歴の取得に失敗しました。";
       return;
     }
@@ -336,7 +323,6 @@ const priceInput = document.getElementById("price");
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
-  loadHistory();
   loadOptions();
   loadHistory();
   loadOptions();
@@ -403,6 +389,21 @@ function setSelectOptions(id, values) {
     el.appendChild(option);
   });
 }
+
+
+window.addEventListener("DOMContentLoaded", () => {
+const priceInput = document.getElementById("price");
+const quantityInput = document.getElementById("quantity");
+const volumeInput = document.getElementById("volume");
+const unitPriceDisplay = document.getElementById("unitPriceDisplay");
+const status = document.getElementById("status");
+const modal = document.getElementById("modal");
+const modalList = document.getElementById("modalList");
+const itemSelect = document.getElementById("filterItem");
+const catSelect = document.getElementById("filterCategory");
+const container = document.getElementById("historyList");
+  calcUnitPrice();
+});
 
 </script>
 <style>
