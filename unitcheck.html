@@ -116,10 +116,10 @@ const priceInput = document.getElementById("price");
     const volume = parseFloat(volumeInput.value || 1);
     if (!isNaN(price) && quantity > 0 && volume > 0) {
       const unit = price / quantity / volume;
-      unitPriceDisplay.textContent = `単価：${unit.toFixed(1)} 円`;
+      unitPriceDisplay.textContent = `${unit.toFixed(1)} 円`;
       return unit;
     }
-    unitPriceDisplay.textContent = "単価：-- 円";
+    unitPriceDisplay.textContent = "-- 円";
     return null;
   }
 
