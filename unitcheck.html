@@ -69,7 +69,18 @@
     <select id="filterCategory"><option value="">すべて</option></select>
   </div>
 </div>
-  
+  </div>
+  <div id="historySection" class="section" style="display:none;">
+  <div class="filter-row">
+    <div class="row">
+      <label>商品名</label>
+      <select id="filterItem"><option value="">すべて</option></select>
+    </div>
+    <div class="row">
+      <label>カテゴリ</label>
+      <select id="filterCategory"><option value="">すべて</option></select>
+    </div>
+  </div>
   <div id="historyListWrapper">
     <div id="historyList"></div>
   </div>
@@ -338,8 +349,7 @@ document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
 });
 
 document.getElementById("resetButton").addEventListener("click", () => {
-  originalPrice = null;
-document.getElementById("unitForm").reset();
+  document.getElementById("unitForm").reset();
   calcUnitPrice();
   status.textContent = "";
 });
