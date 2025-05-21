@@ -44,8 +44,8 @@
     <div class="col button"></div>
   </div>
   <div class="row buttons">
-    <button type="button" id="taxIn">税込価格にする</button>
-    <button type="button" id="taxOut">税抜価格にする</button>
+    <button type="button" id="taxIn">税込</button>
+    <button type="button" id="taxOut">税抜</button>
   </div>
   <div class="row submit-row">
     <button type="button" id="resetButton">リセット</button>
@@ -624,6 +624,14 @@ label {
   width: 100%;
   padding: 6px;
   box-sizing: border-box;
+}
+
+
+.row.buttons {
+  justify-content: center;
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
 }
 
 </style>
