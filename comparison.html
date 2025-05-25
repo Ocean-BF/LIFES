@@ -1,4 +1,4 @@
-<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v5 -->
+<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v6 -->
 <div class="section">
   <div id="itemsContainer"></div>
   <div class="row buttons">
@@ -11,15 +11,15 @@
   if (typeof window.comparisonAppLoaded === "undefined") {
     window.comparisonAppLoaded = true;
 
-    let itemCount = 0;
+    window.itemCount = 0;
 
     function createItem() {
-      itemCount++;
+      window.itemCount++;
       const div = document.createElement("div");
       div.className = "comparison-item section";
       div.innerHTML = `
         <div class="row">
-          <div class="col label">商品${String.fromCharCode(64 + itemCount)}</div>
+          <div class="col label">商品${String.fromCharCode(64 + window.itemCount)}</div>
         </div>
         <div class="row">
           <div class="col label">価格（円）</div>
@@ -81,7 +81,7 @@
 
     function resetAll() {
       document.getElementById("itemsContainer").innerHTML = "";
-      itemCount = 0;
+      window.itemCount = 0;
       addItem();
       addItem();
     }
