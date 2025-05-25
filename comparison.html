@@ -1,4 +1,4 @@
-<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v6 -->
+<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v7 -->
 <div class="section">
   <div id="itemsContainer"></div>
   <div class="row buttons">
@@ -9,7 +9,7 @@
 
 <script>
   if (typeof window.comparisonAppLoaded === "undefined") {
-    window.comparisonAppLoaded = true;
+    window.comparisonAppLoaded = false;
 
     window.itemCount = 0;
 
@@ -88,18 +88,22 @@
 
     document.getElementById("addItem").addEventListener("click", addItem);
     document.getElementById("resetAll").addEventListener("click", resetAll);
+  }
 
-    // 初期化関数：LIFESのloadPageで呼び出す
-    window.initComparisonApp = function () {
+  // 初期化関数：LIFESのloadPageで呼び出す
+  window.initComparisonApp = function () {
+    window.comparisonAppLoaded = false;
+    if (!window.comparisonAppLoaded) {
       resetAll();
-    };
-
-    // 保険として、初回読み込み時に自動実行
-    if (document.readyState !== "loading") {
-      initComparisonApp();
-    } else {
-      document.addEventListener("DOMContentLoaded", initComparisonApp);
+      window.comparisonAppLoaded = true;
     }
+  };
+
+  // 保険として、初回読み込み時に自動実行
+  if (document.readyState !== "loading") {
+    initComparisonApp();
+  } else {
+    document.addEventListener("DOMContentLoaded", initComparisonApp);
   }
 </script>
 
