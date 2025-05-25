@@ -1,4 +1,4 @@
-<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v3 -->
+<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v4 -->
 <div class="section">
   <div id="itemsContainer"></div>
   <div class="row buttons">
@@ -86,9 +86,10 @@
   document.getElementById("addItem").addEventListener("click", addItem);
   document.getElementById("resetAll").addEventListener("click", resetAll);
 
-  // 初期2件
-  addItem();
-  addItem();
+  // LIFES側からこの関数を呼び出してください
+  function initComparisonApp() {
+    resetAll();
+  }
 </script>
 
 <style>
