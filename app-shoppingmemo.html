@@ -8,7 +8,10 @@
 </div>
 
 <script>
-const supabase = window.supabaseClient;
+const supabase = supabase.createClient(
+  'https://mzuqsfoqkaopxhyggwyk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0'
+);
 let userId = null;
 
 async function loadUser() {
@@ -38,7 +41,7 @@ function renderMemoList(items) {
     const row = createMemoRow(item.item, item.id, index);
     container.appendChild(row);
   });
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     for (let i = 0; i < 10; i++) {
       const row = createMemoRow("", null, i);
       container.appendChild(row);
@@ -144,6 +147,7 @@ window.addEventListener("DOMContentLoaded", loadUser);
 
 <style>
 .section {
+  background-color: #ffffff;
   padding: 10px;
 }
 
@@ -157,7 +161,7 @@ window.addEventListener("DOMContentLoaded", loadUser);
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
+  background: #e8f4ff;
   border-radius: 8px;
   padding: 8px 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
