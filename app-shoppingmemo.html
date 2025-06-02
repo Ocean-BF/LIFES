@@ -1,5 +1,5 @@
 
-<!-- 買い物メモアプリ（完全統合版） -->
+<!-- 買い物メモアプリ（v5 非モジュール構成） -->
 <style>
   #shopping-app {
     background-color: #f0f8ff;
@@ -30,13 +30,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-  const supabaseUrl = "https://udcrfwejohzmhfojnwha.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI";
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
+<script>
+  const supabase = window.supabaseClient;
   let userId = null;
 
   document.addEventListener("DOMContentLoaded", async () => {
@@ -74,7 +69,7 @@
     });
   }
 
-  async function addRow() {
+  function addRow() {
     const tableBody = document.querySelector("#memoTable tbody");
     const row = document.createElement("tr");
     row.innerHTML = `
