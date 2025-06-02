@@ -1,232 +1,110 @@
-<!-- shoppingmemo.html | LIFES生活カテゴリ：買い物メモ -->
-<div class="section">
-  <h2 style="text-align:center;">📝 買い物メモ</h2>
-  <div id="memoList" class="memo-list"></div>
-  <div class="row buttons">
-    <button id="addRow" class="btn-submit">＋ 行を追加</button>
-  </div>
+
+<!-- 買い物メモアプリ（完全統合版） -->
+<style>
+  #shopping-app {
+    background-color: #f0f8ff;
+    padding: 1rem;
+    font-family: sans-serif;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  th, td {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    text-align: left;
+  }
+  button {
+    padding: 0.25rem 0.5rem;
+  }
+</style>
+
+<div id="shopping-app">
+  <h2>🛒 買い物メモ</h2>
+  <button onclick="addRow()">＋ 行を追加</button>
+  <table id="memoTable">
+    <tbody></tbody>
+  </table>
 </div>
 
-<script>
-const supabaseClient = supabase.createClient(
-  'https://mzuqsfoqkaopxhyggwyk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0'
-);
-let userId = null;
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-async function loadUser() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) return;
-  userId = user.id;
-  loadMemos();
-}
+  const supabaseUrl = "https://udcrfwejohzmhfojnwha.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI";
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function loadMemos() {
-  const { data, error } = await supabaseClient
-    .from("shopping_memos")
-    .select("*")
-    .eq("user_id", userId)
-    .order("sort_order", { ascending: true });
-  if (error) {
-    alert("読み込みエラー：" + error.message);
-    return;
+  let userId = null;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return alert("ログインしてください");
+
+    userId = user.id;
+    loadMemos();
+  });
+
+  async function loadMemos() {
+    const res = await supabase
+      .from("shopping_memo")
+      .select("*")
+      .eq("user_id", userId)
+      .order("sort_order", { ascending: true });
+
+    const tableBody = document.querySelector("#memoTable tbody");
+    tableBody.innerHTML = "";
+
+    const memos = res.data || [];
+    for (let i = 0; i < Math.max(5, memos.length); i++) {
+      const row = document.createElement("tr");
+      row.dataset.index = i;
+      row.innerHTML = `
+        <td contenteditable="true">${memos[i]?.content || ""}</td>
+        <td><button onclick="deleteRow(this, '${memos[i]?.id || ""}')">×</button></td>
+      `;
+      tableBody.appendChild(row);
+    }
+
+    Sortable.create(tableBody, {
+      animation: 150,
+      onEnd: saveOrder
+    });
   }
-  renderMemoList(data || []);
-}
 
-function renderMemoList(items) {
-  const container = document.getElementById("memoList");
-  container.innerHTML = "";
-  items.forEach((item, index) => {
-    const row = createMemoRow(item.item, item.id, index);
-    container.appendChild(row);
-  });
-  if (!items || items.length === 0) {
-    for (let i = 0; i < 5; i++) {
-      const row = createMemoRow("", null, i);
-      container.appendChild(row);
+  async function addRow() {
+    const tableBody = document.querySelector("#memoTable tbody");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td contenteditable="true"></td>
+      <td><button onclick="deleteRow(this)">×</button></td>
+    `;
+    tableBody.appendChild(row);
+  }
+
+  async function deleteRow(btn, id = null) {
+    const row = btn.closest("tr");
+    row.remove();
+    if (id) {
+      await supabase.from("shopping_memo").delete().eq("id", id);
     }
   }
-  enableDragSort();
-}
 
-function createMemoRow(text, id, index) {
-  const div = document.createElement("div");
-  div.className = "memo-row";
-  
-  div.draggable = true;
-  div.addEventListener("dragstart", (e) => {
-    dragSrcEl = div;
-    e.dataTransfer.effectAllowed = "move";
-  });
-  div.addEventListener("dragover", (e) => {
-    e.preventDefault();
-  });
-  div.addEventListener("drop", (e) => {
-    e.preventDefault();
-    if (dragSrcEl !== div) {
-      const parent = div.parentNode;
-      const srcIndex = [...parent.children].indexOf(dragSrcEl);
-      const targetIndex = [...parent.children].indexOf(div);
-      if (srcIndex < targetIndex) {
-        parent.insertBefore(dragSrcEl, div.nextSibling);
-      } else {
-        parent.insertBefore(dragSrcEl, div);
+  async function saveOrder() {
+    const rows = document.querySelectorAll("#memoTable tbody tr");
+    await supabase.from("shopping_memo").delete().eq("user_id", userId);
+
+    for (let i = 0; i < rows.length; i++) {
+      const content = rows[i].querySelector("td").textContent.trim();
+      if (content !== "") {
+        await supabase.from("shopping_memo").insert({
+          user_id: userId,
+          content,
+          sort_order: i
+        });
       }
-      updateSortOrder();
     }
-  });
-
-  div.dataset.index = index;
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = text;
-  input.placeholder = "入力してください";
-  input.className = "memo-input";
-
-  const del = document.createElement("button");
-  del.textContent = "×";
-  del.className = "delete-btn";
-  del.onclick = async () => {
-    if (id) {
-      await supabaseClient.from("shopping_memos").delete().eq("id", id);
-    }
-    div.remove();
-    updateSortOrder();
-  };
-
-  input.onchange = async () => {
-    const value = input.value.trim();
-    if (value === "") return;
-    if (id) {
-      await supabaseClient.from("shopping_memos").update({ item: value }).eq("id", id);
-    } else {
-      const { data } = await supabaseClient.from("shopping_memos").insert([{
-        user_id: userId,
-        item: value,
-        sort_order: parseInt(div.dataset.index)
-      }]).select().single();
-      div.dataset.id = data.id;
-    }
-  };
-
-  div.appendChild(input);
-  div.appendChild(del);
-  return div;
-}
-
-function enableDragSort() {
-  let dragSrcEl = null;
-  const rows = document.querySelectorAll(".memo-row");
-  rows.forEach(row => {
-    row.addEventListener("dragstart", (e) => {
-      dragSrcEl = row;
-      e.dataTransfer.effectAllowed = "move";
-    });
-    row.addEventListener("dragover", (e) => {
-      e.preventDefault();
-    });
-    row.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      if (dragSrcEl !== row) {
-        const parent = row.parentNode;
-        const srcIndex = [...parent.children].indexOf(dragSrcEl);
-        const targetIndex = [...parent.children].indexOf(row);
-        if (srcIndex < targetIndex) {
-          parent.insertBefore(dragSrcEl, row.nextSibling);
-        } else {
-          parent.insertBefore(dragSrcEl, row);
-        }
-        updateSortOrder();
-      }
-    });
-  });
-}
-
-async function updateSortOrder() {
-  const rows = document.querySelectorAll(".memo-row");
-  const updates = [];
-  rows.forEach((row, i) => {
-    row.dataset.index = i;
-    const id = row.dataset.id;
-    if (id) {
-      updates.push(supabase.from("shopping_memos").update({ sort_order: i }).eq("id", id));
-    }
-  });
-  await Promise.all(updates);
-}
-
-document.getElementById("addRow").addEventListener("click", () => {
-  const container = document.getElementById("memoList");
-  const index = container.children.length;
-  const row = createMemoRow("", null, index);
-  container.appendChild(row);
-  enableDragSort();
-});
-
-window.addEventListener("DOMContentLoaded", loadUser);
+  }
 </script>
-
-<style>
-.section {
-  background-color: #ffffff;
-  padding: 10px;
-}
-
-.memo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.memo-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #e8f4ff;
-  border-radius: 8px;
-  padding: 8px 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.memo-input {
-  flex: 1;
-  font-size: 1.2rem;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
-}
-
-.delete-btn {
-  background: #f55;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.delete-btn:hover {
-  background: #d33;
-}
-
-.row.buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
-
-.btn-submit {
-  background-color: #007bff;
-  border: none;
-  color: #fff;
-  padding: 10px 20px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-</style>
