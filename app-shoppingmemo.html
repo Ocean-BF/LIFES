@@ -16,6 +16,7 @@
   const container = document.getElementById("shoppingmemo-list");
   const addButton = document.getElementById("shoppingmemo-add");
   window.shoppingmemo_data = [];
+  let sortable = null;
 
   const fetchData = async () => {
     const { data, error } = await supabase
@@ -51,16 +52,18 @@
       container.appendChild(card);
     });
 
-    Sortable.create(container, {
-      animation: 150,
-      onEnd: async () => {
-        const ids = [...container.children].map(el => el.getAttribute("data-id"));
-        for (let i = 0; i < ids.length; i++) {
-          await supabase.from("shopping_memos").update({ sort_order: i }).eq("id", ids[i]);
+    // Sortableインスタンスが未作成なら作成
+    if (!sortable) {
+      sortable = Sortable.create(container, {
+        animation: 150,
+        onEnd: async () => {
+          const ids = [...container.children].map(el => el.getAttribute("data-id"));
+          for (let i = 0; i < ids.length; i++) {
+            await supabase.from("shopping_memos").update({ sort_order: i }).eq("id", ids[i]);
+          }
         }
-        fetchData();
-      }
-    });
+      });
+    }
   };
 
   const addItem = async () => {
