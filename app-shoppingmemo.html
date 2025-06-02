@@ -1,32 +1,66 @@
-
-<!-- 買い物メモアプリ（v5 非モジュール構成） -->
+<!-- 買い物メモアプリ v6：カードUI・スマホ対応・Supabase保存 -->
 <style>
-  #shopping-app {
-    background-color: #f0f8ff;
+  .memo-section {
+    background-color: #e6f0ff;
     padding: 1rem;
     font-family: sans-serif;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
+
+  .memo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     margin-top: 1rem;
   }
-  th, td {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    text-align: left;
+
+  .memo-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
-  button {
-    padding: 0.25rem 0.5rem;
+
+  .memo-input {
+    border: none;
+    font-size: 1rem;
+    flex: 1;
+    margin-right: 8px;
+    background: transparent;
+  }
+
+  .memo-input:focus {
+    outline: none;
+  }
+
+  .memo-delete {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .memo-add {
+    display: block;
+    margin: 1rem auto 0;
+    background: #007bff;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
   }
 </style>
 
-<div id="shopping-app">
+<div class="memo-section">
   <h2>🛒 買い物メモ</h2>
-  <button onclick="addRow()">＋ 行を追加</button>
-  <table id="memoTable">
-    <tbody></tbody>
-  </table>
+  <div id="memoList" class="memo-list"></div>
+  <button class="memo-add" onclick="addMemo()">＋ 行を追加</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -37,7 +71,6 @@
   document.addEventListener("DOMContentLoaded", async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return alert("ログインしてください");
-
     userId = user.id;
     loadMemos();
   });
@@ -49,56 +82,76 @@
       .eq("user_id", userId)
       .order("sort_order", { ascending: true });
 
-    const tableBody = document.querySelector("#memoTable tbody");
-    tableBody.innerHTML = "";
-
     const memos = res.data || [];
-    for (let i = 0; i < Math.max(5, memos.length); i++) {
-      const row = document.createElement("tr");
-      row.dataset.index = i;
-      row.innerHTML = `
-        <td contenteditable="true">${memos[i]?.content || ""}</td>
-        <td><button onclick="deleteRow(this, '${memos[i]?.id || ""}')">×</button></td>
-      `;
-      tableBody.appendChild(row);
+    const list = document.getElementById("memoList");
+    list.innerHTML = "";
+
+    if (memos.length === 0) {
+      for (let i = 0; i < 5; i++) addMemo("", null, false);
+    } else {
+      memos.forEach((item, i) => {
+        addMemo(item.content, item.id, false);
+      });
     }
 
-    Sortable.create(tableBody, {
+    Sortable.create(list, {
       animation: 150,
       onEnd: saveOrder
     });
   }
 
-  function addRow() {
-    const tableBody = document.querySelector("#memoTable tbody");
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td contenteditable="true"></td>
-      <td><button onclick="deleteRow(this)">×</button></td>
-    `;
-    tableBody.appendChild(row);
-  }
+  function addMemo(content = "", id = null, focus = true) {
+    const list = document.getElementById("memoList");
+    const card = document.createElement("div");
+    card.className = "memo-card";
+    card.dataset.id = id;
 
-  async function deleteRow(btn, id = null) {
-    const row = btn.closest("tr");
-    row.remove();
-    if (id) {
-      await supabase.from("shopping_memo").delete().eq("id", id);
-    }
+    const input = document.createElement("input");
+    input.className = "memo-input";
+    input.placeholder = "入力してください";
+    input.value = content;
+
+    input.onchange = async () => {
+      const text = input.value.trim();
+      if (!text) return;
+      if (id) {
+        await supabase.from("shopping_memo").update({ content: text }).eq("id", id);
+      } else {
+        const { data, error } = await supabase
+          .from("shopping_memo")
+          .insert([{ user_id: userId, content: text, sort_order: list.children.length }])
+          .select()
+          .single();
+        if (data?.id) {
+          card.dataset.id = data.id;
+        }
+      }
+    };
+
+    const del = document.createElement("button");
+    del.textContent = "×";
+    del.className = "memo-delete";
+    del.onclick = async () => {
+      card.remove();
+      if (card.dataset.id) {
+        await supabase.from("shopping_memo").delete().eq("id", card.dataset.id);
+      }
+      saveOrder();
+    };
+
+    card.appendChild(input);
+    card.appendChild(del);
+    list.appendChild(card);
+
+    if (focus) input.focus();
   }
 
   async function saveOrder() {
-    const rows = document.querySelectorAll("#memoTable tbody tr");
-    await supabase.from("shopping_memo").delete().eq("user_id", userId);
-
-    for (let i = 0; i < rows.length; i++) {
-      const content = rows[i].querySelector("td").textContent.trim();
-      if (content !== "") {
-        await supabase.from("shopping_memo").insert({
-          user_id: userId,
-          content,
-          sort_order: i
-        });
+    const cards = [...document.querySelectorAll(".memo-card")];
+    for (let i = 0; i < cards.length; i++) {
+      const id = cards[i].dataset.id;
+      if (id) {
+        await supabase.from("shopping_memo").update({ sort_order: i }).eq("id", id);
       }
     }
   }
