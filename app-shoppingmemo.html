@@ -68,19 +68,19 @@
   const supabase = window.supabaseClient;
   let userId = null;
 
-  document.addEventListener("DOMContentLoaded", async () => {
+  (async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return alert("ログインしてください");
     userId = user.id;
     loadMemos();
-  });
+  })();
 
   async function loadMemos() {
     const res = await supabase
       .from("shopping_memo")
       .select("*")
       .eq("user_id", userId)
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })();
 
     const memos = res.data || [];
     const list = document.getElementById("memoList");
@@ -91,13 +91,13 @@
     } else {
       memos.forEach((item, i) => {
         addMemo(item.content, item.id, false);
-      });
+      })();
     }
 
     Sortable.create(list, {
       animation: 150,
       onEnd: saveOrder
-    });
+    })();
   }
 
   function addMemo(content = "", id = null, focus = true) {
