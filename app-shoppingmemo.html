@@ -1,0 +1,205 @@
+<!-- shoppingmemo.html | LIFES生活カテゴリ：買い物メモ -->
+<div class="section">
+  <h2 style="text-align:center;">📝 買い物メモ</h2>
+  <div id="memoList" class="memo-list"></div>
+  <div class="row buttons">
+    <button id="addRow" class="btn-submit">＋ 行を追加</button>
+  </div>
+</div>
+
+<script>
+const supabase = window.supabaseClient;
+let userId = null;
+
+async function loadUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  userId = user.id;
+  loadMemos();
+}
+
+async function loadMemos() {
+  const { data, error } = await supabase
+    .from("shopping_memos")
+    .select("*")
+    .eq("user_id", userId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    alert("読み込みエラー：" + error.message);
+    return;
+  }
+  renderMemoList(data || []);
+}
+
+function renderMemoList(items) {
+  const container = document.getElementById("memoList");
+  container.innerHTML = "";
+  items.forEach((item, index) => {
+    const row = createMemoRow(item.item, item.id, index);
+    container.appendChild(row);
+  });
+  if (items.length === 0) {
+    for (let i = 0; i < 10; i++) {
+      const row = createMemoRow("", null, i);
+      container.appendChild(row);
+    }
+  }
+  enableDragSort();
+}
+
+function createMemoRow(text, id, index) {
+  const div = document.createElement("div");
+  div.className = "memo-row";
+  div.draggable = true;
+  div.dataset.index = index;
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = text;
+  input.placeholder = "入力してください";
+  input.className = "memo-input";
+
+  const del = document.createElement("button");
+  del.textContent = "×";
+  del.className = "delete-btn";
+  del.onclick = async () => {
+    if (id) {
+      await supabase.from("shopping_memos").delete().eq("id", id);
+    }
+    div.remove();
+    updateSortOrder();
+  };
+
+  input.onchange = async () => {
+    const value = input.value.trim();
+    if (value === "") return;
+    if (id) {
+      await supabase.from("shopping_memos").update({ item: value }).eq("id", id);
+    } else {
+      const { data } = await supabase.from("shopping_memos").insert({
+        user_id: userId,
+        item: value,
+        sort_order: parseInt(div.dataset.index)
+      }).select().single();
+      div.dataset.id = data.id;
+    }
+  };
+
+  div.appendChild(input);
+  div.appendChild(del);
+  return div;
+}
+
+function enableDragSort() {
+  let dragSrcEl = null;
+  const rows = document.querySelectorAll(".memo-row");
+  rows.forEach(row => {
+    row.addEventListener("dragstart", (e) => {
+      dragSrcEl = row;
+      e.dataTransfer.effectAllowed = "move";
+    });
+    row.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
+    row.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      if (dragSrcEl !== row) {
+        const parent = row.parentNode;
+        const srcIndex = [...parent.children].indexOf(dragSrcEl);
+        const targetIndex = [...parent.children].indexOf(row);
+        if (srcIndex < targetIndex) {
+          parent.insertBefore(dragSrcEl, row.nextSibling);
+        } else {
+          parent.insertBefore(dragSrcEl, row);
+        }
+        updateSortOrder();
+      }
+    });
+  });
+}
+
+async function updateSortOrder() {
+  const rows = document.querySelectorAll(".memo-row");
+  const updates = [];
+  rows.forEach((row, i) => {
+    row.dataset.index = i;
+    const id = row.dataset.id;
+    if (id) {
+      updates.push(supabase.from("shopping_memos").update({ sort_order: i }).eq("id", id));
+    }
+  });
+  await Promise.all(updates);
+}
+
+document.getElementById("addRow").addEventListener("click", () => {
+  const container = document.getElementById("memoList");
+  const index = container.children.length;
+  const row = createMemoRow("", null, index);
+  container.appendChild(row);
+  enableDragSort();
+});
+
+window.addEventListener("DOMContentLoaded", loadUser);
+</script>
+
+<style>
+.section {
+  padding: 10px;
+}
+
+.memo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.memo-input {
+  flex: 1;
+  font-size: 1.2rem;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.delete-btn {
+  background: #f55;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #d33;
+}
+
+.row.buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.btn-submit {
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+</style>
