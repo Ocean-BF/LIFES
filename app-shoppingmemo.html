@@ -1,158 +1,131 @@
-<!-- 買い物メモアプリ v6：カードUI・スマホ対応・Supabase保存 -->
-<style>
-  .memo-section {
-    background-color: #e6f0ff;
-    padding: 1rem;
-    font-family: sans-serif;
-  }
-
-  .memo-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 1rem;
-  }
-
-  .memo-card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-
-  .memo-input {
-    border: none;
-    font-size: 1rem;
-    flex: 1;
-    margin-right: 8px;
-    background: transparent;
-  }
-
-  .memo-input:focus {
-    outline: none;
-  }
-
-  .memo-delete {
-    background: #f44336;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .memo-add {
-    display: block;
-    margin: 1rem auto 0;
-    background: #007bff;
-    color: white;
-    padding: 10px 16px;
-    border: none;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-</style>
-
-<div class="memo-section">
-  <h2>🛒 買い物メモ</h2>
-  <div id="memoList" class="memo-list"></div>
-  <button class="memo-add" onclick="addMemo()">＋ 行を追加</button>
+<!-- app-shoppingmemo.html -->
+<div id="shoppingmemo-container" style="background-color: #e3f2fd; padding: 10px;">
+  <h2 style="text-align:center;">🛒 買い物メモ</h2>
+  <div id="shoppingmemo-list" class="memo-list"></div>
+  <button id="shoppingmemo-add" class="add-button">＋ 追加</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-  
-  let userId = null;
+(async () => {
+  const supabase = window.supabaseClient;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-  (async () => {
-    const { data: { user } } = await window.supabaseClient.auth.getUser();
-    if (!user) return alert("ログインしてください");
-    userId = user.id;
-    loadMemos();
-  });
+  const userId = user.id;
+  const container = document.getElementById("shoppingmemo-list");
+  const addButton = document.getElementById("shoppingmemo-add");
+  window.shoppingmemo_data = [];
 
-  async function loadMemos() {
-    const res = await supabase
-      .from("shopping_memo")
+  const fetchData = async () => {
+    const { data, error } = await supabase
+      .from("shopping_memos")
       .select("*")
       .eq("user_id", userId)
       .order("sort_order", { ascending: true });
+    if (error) return;
+    window.shoppingmemo_data = data;
+    render();
+  };
 
-    const memos = res.data || [];
-    const list = document.getElementById("memoList");
-    list.innerHTML = "";
+  const render = () => {
+    container.innerHTML = "";
+    window.shoppingmemo_data.forEach(row => {
+      const card = document.createElement("div");
+      card.className = "memo-card";
+      card.setAttribute("data-id", row.id);
 
-    if (memos.length === 0) {
-      for (let i = 0; i < 5; i++) addMemo("", null, false);
-    } else {
-      memos.forEach((item, i) => {
-        addMemo(item.content, item.id, false);
-      });
-    }
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = row.item || "";
+      input.className = "memo-input";
+      input.onchange = () => updateItem(row.id, input.value);
 
-    Sortable.create(list, {
-      animation: 150,
-      onEnd: saveOrder
+      const del = document.createElement("button");
+      del.textContent = "×";
+      del.className = "memo-delete";
+      del.onclick = () => deleteItem(row.id);
+
+      card.appendChild(input);
+      card.appendChild(del);
+      container.appendChild(card);
     });
-  }
 
-  function addMemo(content = "", id = null, focus = true) {
-    const list = document.getElementById("memoList");
-    const card = document.createElement("div");
-    card.className = "memo-card";
-    card.dataset.id = id;
-
-    const input = document.createElement("input");
-    input.className = "memo-input";
-    input.placeholder = "入力してください";
-    input.value = content;
-
-    input.onchange = async () => {
-      const text = input.value.trim();
-      if (!text) return;
-      if (id) {
-        await window.supabaseClient.from("shopping_memo").update({ content: text }).eq("id", id);
-      } else {
-        const { data, error } = await supabase
-          .from("shopping_memo")
-          .insert([{ user_id: userId, content: text, sort_order: list.children.length }])
-          .select()
-          .single();
-        if (data?.id) {
-          card.dataset.id = data.id;
+    Sortable.create(container, {
+      animation: 150,
+      onEnd: async () => {
+        const ids = [...container.children].map(el => el.getAttribute("data-id"));
+        for (let i = 0; i < ids.length; i++) {
+          await supabase.from("shopping_memos").update({ sort_order: i }).eq("id", ids[i]);
         }
+        fetchData();
       }
-    };
+    });
+  };
 
-    const del = document.createElement("button");
-    del.textContent = "×";
-    del.className = "memo-delete";
-    del.onclick = async () => {
-      card.remove();
-      if (card.dataset.id) {
-        await window.supabaseClient.from("shopping_memo").delete().eq("id", card.dataset.id);
-      }
-      saveOrder();
-    };
+  const addItem = async () => {
+    const { error } = await supabase.from("shopping_memos").insert([{
+      user_id: userId,
+      item: "",
+      sort_order: window.shoppingmemo_data.length
+    }]);
+    if (!error) fetchData();
+  };
 
-    card.appendChild(input);
-    card.appendChild(del);
-    list.appendChild(card);
+  const updateItem = async (id, value) => {
+    await supabase.from("shopping_memos").update({ item: value }).eq("id", id);
+  };
 
-    if (focus) input.focus();
-  }
+  const deleteItem = async (id) => {
+    await supabase.from("shopping_memos").delete().eq("id", id);
+    fetchData();
+  };
 
-  async function saveOrder() {
-    const cards = [...document.querySelectorAll(".memo-card")];
-    for (let i = 0; i < cards.length; i++) {
-      const id = cards[i].dataset.id;
-      if (id) {
-        await window.supabaseClient.from("shopping_memo").update({ sort_order: i }).eq("id", id);
-      }
-    }
-  }
+  addButton.onclick = addItem;
+  fetchData();
+})();
 </script>
+
+<style>
+#shoppingmemo-container {
+  border-radius: 12px;
+}
+.memo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.memo-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.memo-input {
+  flex: 1;
+  font-size: 1rem;
+  border: none;
+  background: transparent;
+  outline: none;
+}
+.memo-delete {
+  font-size: 1rem;
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+}
+.add-button {
+  width: 100%;
+  padding: 10px;
+  background: #90caf9;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #003c8f;
+  font-weight: bold;
+  margin-top: 10px;
+}
+</style>
