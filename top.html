@@ -86,7 +86,7 @@
   <script>
     async function loadPage(file) {
       try {
-        localStorage.setItem("lifes_last_page", file);
+        sessionStorage.setItem("lifes_last_page", file);
         const res = await fetch(file);
         const htmlText = await res.text();
         const parser = new DOMParser();
@@ -130,7 +130,7 @@
       }
       if (op) document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
 
-      const lastPage = localStorage.getItem("lifes_last_page") || "home.html";
+      const lastPage = sessionStorage.getItem("lifes_last_page") || "home.html";
       loadPage(lastPage);
     };
   </script>
