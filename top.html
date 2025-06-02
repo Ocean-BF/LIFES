@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -85,6 +86,7 @@
   <script>
     async function loadPage(file) {
       try {
+        sessionStorage.setItem("lifes_last_page", file);
         const res = await fetch(file);
         const htmlText = await res.text();
         const parser = new DOMParser();
@@ -114,29 +116,7 @@
       }
     }
 
-    
-window.onload = async () => {
-  const { data: sessionData } = await supabaseClient.auth.getSession();
-  if (!sessionData.session) {
-    location.href = "index.html";
-    return;
-  }
-
-  const { data: userData } = await supabaseClient.auth.getUser();
-  const uid = userData?.user?.id;
-
-  const { data: profile, error } = await supabaseClient
-    .from("profiles")
-    .select("is_approved")
-    .eq("id", uid)
-    .single();
-
-  if (error || !profile?.is_approved) {
-    alert("まだ利用承認されていません。");
-    location.href = "index.html";
-    return;
-  }
-
+    window.onload = () => {
       const bg = localStorage.getItem("lifes_bg_color");
       const img = localStorage.getItem("lifes_bg_image");
       const op = localStorage.getItem("lifes_card_opacity");
@@ -150,7 +130,8 @@ window.onload = async () => {
       }
       if (op) document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
 
-      loadPage("home.html");
+      const lastPage = sessionStorage.getItem("lifes_last_page") || "home.html";
+      loadPage(lastPage);
     };
   </script>
 </body>
