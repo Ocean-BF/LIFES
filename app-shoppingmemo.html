@@ -42,7 +42,7 @@ function renderMemoList(items) {
     container.appendChild(row);
   });
   if (!items || items.length === 0) {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       const row = createMemoRow("", null, i);
       container.appendChild(row);
     }
@@ -53,7 +53,30 @@ function renderMemoList(items) {
 function createMemoRow(text, id, index) {
   const div = document.createElement("div");
   div.className = "memo-row";
+  
   div.draggable = true;
+  div.addEventListener("dragstart", (e) => {
+    dragSrcEl = div;
+    e.dataTransfer.effectAllowed = "move";
+  });
+  div.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+  div.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (dragSrcEl !== div) {
+      const parent = div.parentNode;
+      const srcIndex = [...parent.children].indexOf(dragSrcEl);
+      const targetIndex = [...parent.children].indexOf(div);
+      if (srcIndex < targetIndex) {
+        parent.insertBefore(dragSrcEl, div.nextSibling);
+      } else {
+        parent.insertBefore(dragSrcEl, div);
+      }
+      updateSortOrder();
+    }
+  });
+
   div.dataset.index = index;
 
   const input = document.createElement("input");
@@ -79,11 +102,11 @@ function createMemoRow(text, id, index) {
     if (id) {
       await supabaseClient.from("shopping_memos").update({ item: value }).eq("id", id);
     } else {
-      const { data } = await supabaseClient.from("shopping_memos").insert({
+      const { data } = await supabaseClient.from("shopping_memos").insert([{
         user_id: userId,
         item: value,
         sort_order: parseInt(div.dataset.index)
-      }).select().single();
+      }]).select().single();
       div.dataset.id = data.id;
     }
   };
