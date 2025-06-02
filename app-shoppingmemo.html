@@ -65,11 +65,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-  const sb = window.supabaseClient;
+  
   let userId = null;
 
   (async () => {
-    const { data: { user } } = await sb.auth.getUser();
+    const { data: { user } } = await window.supabaseClient.auth.getUser();
     if (!user) return alert("ログインしてください");
     userId = user.id;
     loadMemos();
@@ -115,7 +115,7 @@
       const text = input.value.trim();
       if (!text) return;
       if (id) {
-        await sb.from("shopping_memo").update({ content: text }).eq("id", id);
+        await window.supabaseClient.from("shopping_memo").update({ content: text }).eq("id", id);
       } else {
         const { data, error } = await supabase
           .from("shopping_memo")
@@ -134,7 +134,7 @@
     del.onclick = async () => {
       card.remove();
       if (card.dataset.id) {
-        await sb.from("shopping_memo").delete().eq("id", card.dataset.id);
+        await window.supabaseClient.from("shopping_memo").delete().eq("id", card.dataset.id);
       }
       saveOrder();
     };
@@ -151,7 +151,7 @@
     for (let i = 0; i < cards.length; i++) {
       const id = cards[i].dataset.id;
       if (id) {
-        await sb.from("shopping_memo").update({ sort_order: i }).eq("id", id);
+        await window.supabaseClient.from("shopping_memo").update({ sort_order: i }).eq("id", id);
       }
     }
   }
