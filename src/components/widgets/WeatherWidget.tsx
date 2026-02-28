@@ -17,7 +17,7 @@ export default function WeatherWidget({ city }: { city: string }) {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [lastUpdated, setLastUpdated] = useState<string>("");
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchWeather();
@@ -54,23 +54,31 @@ export default function WeatherWidget({ city }: { city: string }) {
             }
 
             const current = data.current_condition[0];
-            // 表示用の地名を取得（現在地の場合はより近い場所の名前を表示）
-            // "Yu Ying" のような誤情報を防ぐため、cityDisplay が極端に短いか怪しい場合は fallback
-            const nearestArea = data.nearest_area ? data.nearest_area[0].areaName[0].value : "";
-            const cityDisplay = (nearestArea && nearestArea.length > 2) ? nearestArea : (city === "Auto" ? "神戸" : city);
+            const nearestArea = data.nearest_area && data.nearest_area[0].areaName ? data.nearest_area[0].areaName[0].value : "";
+
+            // "Yu Ying" などの誤情報を防ぐ。また、英字のみの場合は日本語のフォールバックを検討
+            let cityDisplay = city;
+            if (city === "Auto" || city === "現在地") {
+                cityDisplay = nearestArea;
+                if (cityDisplay.toLowerCase() === "yu ying" || cityDisplay.length < 2) {
+                    cityDisplay = "現在地";
+                }
+            }
 
             setWeather({
                 temp: parseInt(current.temp_C),
-                condition: current.lang_jp ? current.lang_jp[0].value : current.weatherDesc[0].value,
+                condition: (current.lang_jp && current.lang_jp[0].value) || current.weatherDesc[0].value,
                 pressure: parseInt(current.pressure),
                 humidity: parseInt(current.humidity),
                 city: cityDisplay
             });
             setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-            setError(false);
-        } catch (err) {
+            setError(null);
+        } catch (err: any) {
             console.error(err);
-            setError(true);
+            // エラーの種類を特定して表示
+            const isGeoError = err.message && (err.message.includes("location") || err.message.includes("geolocation"));
+            setError(isGeoError ? "位置情報エラー" : "通信エラー");
         } finally {
             setLoading(false);
         }
@@ -106,7 +114,7 @@ export default function WeatherWidget({ city }: { city: string }) {
         return (
             <div className="glass glossy-border p-4 rounded-3xl aspect-square flex flex-col justify-center items-center shadow-lg opacity-50">
                 <AlertCircle size={32} />
-                <p className="text-[10px] mt-2">通信エラー</p>
+                <p className="text-[10px] mt-2 text-center">{error || "通信エラー"}</p>
                 <button onClick={fetchWeather} className="text-[10px] underline mt-1">再試行</button>
             </div>
         );

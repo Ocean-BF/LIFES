@@ -25,11 +25,11 @@ import HomeWidgets from "./widgets/HomeWidgets";
 import ClockWidget from "./widgets/ClockWidget";
 
 const WALLPAPERS: Record<string, string> = {
-    glass: "bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900",
-    ocean: "bg-gradient-to-br from-blue-900 to-emerald-900",
-    sunset: "bg-gradient-to-br from-orange-600 to-rose-900",
-    dark: "bg-black",
-    minimal: "bg-slate-300 dark:bg-slate-900",
+    glass: "bg-gradient-to-br from-slate-200 via-indigo-100 to-rose-100 dark:from-indigo-950 dark:via-purple-950 dark:to-slate-950",
+    ocean: "bg-gradient-to-br from-cyan-100 to-blue-200 dark:from-blue-950 dark:to-emerald-950",
+    sunset: "bg-gradient-to-br from-orange-100 to-rose-200 dark:from-orange-900 dark:to-rose-950",
+    dark: "bg-slate-50 dark:bg-black",
+    minimal: "bg-slate-100 dark:bg-slate-900",
 };
 
 type Tab = "home" | "life" | "health" | "learning" | "play" | "settings";
@@ -79,10 +79,18 @@ export default function OSContainer() {
             if (data.wallpaper_id) setWallpaper(data.wallpaper_id);
             if (data.avatar_emoji) setAvatarEmoji(data.avatar_emoji);
             if (data.weather_city) setWeatherCity(data.weather_city);
-        } else if (error) {
-            console.error("Admin check error:", error);
-            // エラーが発生しても、フォールバックとして管理者権限を再確認するなどの
-            // 処理が必要な場合がありますが、まずはDBの更新を優先してください
+        } else {
+            // プロフィールが存在しない場合は新規作成
+            const { error: createError } = await supabase
+                .from("profiles")
+                .insert({
+                    id: user.id,
+                    is_admin: false,
+                    avatar_emoji: "👤",
+                    wallpaper_id: "glass",
+                    weather_city: "Tokyo"
+                });
+            if (createError) console.error("Profile creation error:", createError);
         }
     }
 
@@ -242,8 +250,8 @@ export default function OSContainer() {
                                     "flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300",
                                     isActive ? "bg-white/20 text-white scale-110 shadow-lg" : "text-white/60 hover:text-white/90"
                                 )}>
-                                    <Icon size={24} strokeWidth={isActive ? 3 : 2} />
-                                    <span className="text-[10px] font-black mt-1 uppercase tracking-tight">{item.label}</span>
+                                    <Icon size={26} strokeWidth={isActive ? 3 : 2.5} />
+                                    <span className="text-[12px] font-black mt-1.5 uppercase tracking-tight">{item.label}</span>
                                 </div>
                             </button>
                         );
@@ -313,10 +321,10 @@ function AppIcon({ app, isFavorite, onToggleFavorite, onClick }: { app: AppData,
             onClick={onClick}
             className="flex flex-col items-center gap-1.5 relative group cursor-pointer"
         >
-            <div className="w-16 h-16 glass glossy-border rounded-2xl flex items-center justify-center text-3xl shadow-2xl backdrop-blur-xl">
+            <div className="w-20 h-20 glass glossy-border rounded-3xl flex items-center justify-center text-4xl shadow-2xl backdrop-blur-2xl">
                 {app.icon_value}
             </div>
-            <span className="text-[12px] font-black text-white drop-shadow-md tracking-tight text-center px-1">
+            <span className="text-[14px] font-black text-white dark:text-white drop-shadow-md tracking-tight text-center px-1">
                 {app.title}
             </span>
 
