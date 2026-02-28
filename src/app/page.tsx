@@ -1,9 +1,9 @@
-import OSContainer from "@/components/OSContainer";
+import AppRoot from "@/components/AppRoot";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <OSContainer />
-    </div>
+    <main className="min-h-screen">
+      <AppRoot />
+    </main>
   );
 }
