@@ -55,7 +55,9 @@ export default function WeatherWidget({ city }: { city: string }) {
 
             const current = data.current_condition[0];
             // 表示用の地名を取得（現在地の場合はより近い場所の名前を表示）
-            const cityDisplay = data.nearest_area ? data.nearest_area[0].areaName[0].value : city;
+            // "Yu Ying" のような誤情報を防ぐため、cityDisplay が極端に短いか怪しい場合は fallback
+            const nearestArea = data.nearest_area ? data.nearest_area[0].areaName[0].value : "";
+            const cityDisplay = (nearestArea && nearestArea.length > 2) ? nearestArea : (city === "Auto" ? "神戸" : city);
 
             setWeather({
                 temp: parseInt(current.temp_C),
@@ -127,10 +129,10 @@ export default function WeatherWidget({ city }: { city: string }) {
             <div className="flex justify-between items-start relative z-10">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-black uppercase opacity-40 tracking-widest">Weather</span>
-                        {lastUpdated && <span className="text-[8px] font-bold opacity-30">{lastUpdated}更新</span>}
+                        <span className="text-[10px] font-black uppercase text-white/60 tracking-widest">Weather</span>
+                        {lastUpdated && <span className="text-[9px] font-black text-white/40">{lastUpdated}更新</span>}
                     </div>
-                    <span className="text-xs font-bold">{weather.city}</span>
+                    <span className="text-sm font-black text-white drop-shadow-sm">{weather.city}</span>
                 </div>
                 <div onClick={fetchWeather} className="cursor-pointer hover:rotate-180 transition-transform duration-500">
                     {getWeatherIcon(weather.condition)}
@@ -139,21 +141,21 @@ export default function WeatherWidget({ city }: { city: string }) {
 
             <div className="relative z-10">
                 <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black tracking-tighter">{weather.temp}</span>
-                    <span className="text-lg font-bold opacity-50">°C</span>
+                    <span className="text-5xl font-black tracking-tighter text-white drop-shadow-md">{weather.temp}</span>
+                    <span className="text-xl font-black text-white/60">°C</span>
                 </div>
-                <div className="text-[11px] font-bold opacity-70 mt-0.5">{weather.condition}</div>
+                <div className="text-[12px] font-black text-white/90 mt-0.5">{weather.condition}</div>
             </div>
 
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 relative z-10">
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/20 relative z-10">
                 <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-1 text-[9px] font-bold opacity-40">
+                    <div className="flex items-center gap-1 text-[10px] font-black text-white/50">
                         <Gauge size={10} /> 気圧
                     </div>
-                    <div className="text-[10px] font-black">{weather.pressure} hPa</div>
+                    <div className="text-[11px] font-black text-white">{weather.pressure} hPa</div>
                 </div>
                 <div className={cn(
-                    "px-2 py-0.5 rounded-full bg-white/5 flex items-center gap-1 text-[8px] font-black",
+                    "px-2 py-1 rounded-full bg-white/10 flex items-center gap-1 text-[9px] font-black shadow-inner",
                     pressureInfo.color
                 )}>
                     {pressureInfo.icon}

@@ -125,11 +125,11 @@ export default function OSContainer() {
 
     return (
         <div className={cn(
-            "relative h-screen w-full flex flex-col overflow-hidden transition-all duration-700",
+            "relative h-[100dvh] w-full flex flex-col overflow-hidden transition-all duration-700",
             WALLPAPERS[wallpaper] || WALLPAPERS.glass
         )}>
-            {/* バックグラウンドのオーバーレイ（ダークモード等で少し暗くするため） */}
-            <div className="absolute inset-0 bg-black/10 dark:bg-black/40 pointer-events-none z-0" />
+            {/* バックグラウンドのオーバーレイ（ダークモード等で少し暗くし、視認性を確保） */}
+            <div className="absolute inset-0 bg-black/20 dark:bg-black/50 pointer-events-none z-0" />
             {/* メインコンテンツエリア */}
             <main className="flex-1 relative z-10 p-4 pt-12 overflow-y-auto ios-scroll">
                 <AnimatePresence mode="wait">
@@ -240,10 +240,10 @@ export default function OSContainer() {
                             >
                                 <div className={cn(
                                     "flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300",
-                                    isActive ? "bg-foreground/10 text-foreground scale-110" : "text-foreground/40 hover:text-foreground/60"
+                                    isActive ? "bg-white/20 text-white scale-110 shadow-lg" : "text-white/60 hover:text-white/90"
                                 )}>
-                                    <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                    <span className="text-[9px] font-black mt-1 uppercase tracking-tighter">{item.label}</span>
+                                    <Icon size={24} strokeWidth={isActive ? 3 : 2} />
+                                    <span className="text-[10px] font-black mt-1 uppercase tracking-tight">{item.label}</span>
                                 </div>
                             </button>
                         );
@@ -313,10 +313,10 @@ function AppIcon({ app, isFavorite, onToggleFavorite, onClick }: { app: AppData,
             onClick={onClick}
             className="flex flex-col items-center gap-1.5 relative group cursor-pointer"
         >
-            <div className="w-16 h-16 glass glossy-border rounded-2xl flex items-center justify-center text-3xl shadow-xl">
+            <div className="w-16 h-16 glass glossy-border rounded-2xl flex items-center justify-center text-3xl shadow-2xl backdrop-blur-xl">
                 {app.icon_value}
             </div>
-            <span className="text-[11px] font-medium text-foreground/80 tracking-tight text-center px-1">
+            <span className="text-[12px] font-black text-white drop-shadow-md tracking-tight text-center px-1">
                 {app.title}
             </span>
 
