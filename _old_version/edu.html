@@ -1,0 +1,104 @@
+<div id="app-list"></div>
+
+<style>
+  #app-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 10px;
+  }
+
+  @media (max-width: 360px) {
+    #app-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .app-card {
+    background-color: var(--card-color, rgba(255,255,255,0.9));
+    border-radius: 16px;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .app-card:hover {
+    transform: scale(1.03);
+  }
+
+  .app-icon {
+    font-size: 36px;
+    margin-bottom: 6px;
+  }
+
+  .app-title {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
+
+<script>
+(async () => {
+  const listEl = document.getElementById("app-list");
+  listEl.innerHTML = "読み込み中...";
+
+  const { data: userData } = await window.supabaseClient.auth.getUser();
+  const uid = userData?.user?.id;
+
+  let isAdmin = false;
+
+  if (uid) {
+    const { data: profile } = await window.supabaseClient
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", uid)
+      .single();
+    isAdmin = profile?.is_admin === true;
+  }
+
+  let query = window.supabaseClient
+    .from("life-apps")
+    .select("title, path, icon")
+    .eq("category", "edu");
+
+  if (!isAdmin) {
+    query = query.eq("is_public", true);
+  }
+
+  const { data, error } = await query.order("order", { ascending: true });
+
+  if (error) {
+    listEl.innerHTML = "アプリ一覧の取得に失敗しました。";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    listEl.innerHTML = "公開中のアプリはまだありません。";
+    return;
+  }
+
+  listEl.innerHTML = "";
+
+  data.forEach(app => {
+    const card = document.createElement("div");
+    card.className = "app-card";
+    card.onclick = () => loadPage(app.path);
+
+    card.innerHTML = `
+      <div class="app-icon">${app.icon || "📦"}</div>
+      <div class="app-title">${app.title}</div>
+    `;
+    listEl.appendChild(card);
+  });
+})();
+</script>

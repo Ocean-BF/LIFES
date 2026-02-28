@@ -1,0 +1,187 @@
+<div class="panel">
+  <h2 class="panel-title">アカウント</h2>
+  <div id="user-email" class="text">取得中...</div>
+  <label for="new-password">新しいパスワード:</label>
+  <input type="password" id="new-password" placeholder="6文字以上で入力">
+  <button onclick="changePassword()">パスワードを変更</button>
+</div>
+
+<div id="admin-link-panel" class="panel" style="display: none; text-align: center;">
+  <a href="admin.html" style="color: #4caf50; text-decoration: underline; font-weight: bold;">管理パネルへ</a>
+</div>
+
+<div class="panel">
+  <h2 class="panel-title">表示設定</h2>
+  <label for="bg-color">背景色を選択:</label>
+  <input type="color" id="bg-color" value="#f0f4f8" style="height: 40px; padding: 0; border: none;">
+
+  <label for="bg-file">背景画像を選択:</label>
+  <input type="file" id="bg-file" accept="image/*">
+
+  <label for="card-opacity">カードの透明度:</label>
+  <input type="range" id="card-opacity" min="0.5" max="1" step="0.05" value="0.9">
+
+  <button onclick="resetStyles()" class="outline">スタイルをリセット</button>
+</div>
+
+<div class="panel">
+  <h2 class="panel-title">ログアウト</h2>
+  <button class="logout" onclick="logout()">ログアウト</button>
+</div>
+
+<style>
+  .panel {
+    background-color: var(--card-color, rgba(255,255,255,0.9));
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .panel-title {
+    font-size: 16px;
+    margin-top: 0;
+  }
+  label {
+    display: block;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  input[type="color"],
+  input[type="range"],
+  input[type="password"],
+  input[type="file"] {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  .text {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  button {
+    margin-top: 16px;
+    padding: 12px 16px;
+    font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #43a047;
+  }
+  button.outline {
+    background-color: #ffffff;
+    color: #4caf50;
+    border: 2px solid #4caf50;
+  }
+  button.logout {
+    background-color: #f44336;
+  }
+</style>
+
+<script>
+setTimeout(async () => {
+  const client = window.supabaseClient;
+
+  // セッションチェック＆再接続
+  const { data: sessionData } = await client.auth.getSession();
+  if (!sessionData.session) {
+    const { data: refreshed, error: refreshError } = await client.auth.refreshSession();
+    if (refreshError || !refreshed.session) {
+      alert("セッションが切れています。ログインし直してください。");
+      location.href = "index.html";
+      return;
+    }
+  }
+
+  // ユーザー情報取得＆メール表示
+  const { data: { user } } = await client.auth.getUser();
+  document.getElementById("user-email").textContent = user?.email || "取得できませんでした";
+
+  // 管理者判定
+  const { data: adminData } = await client.from("profiles").select("is_admin").eq("id", user.id).single();
+  if (adminData?.is_admin) {
+    document.getElementById("admin-link-panel").style.display = "block";
+  }
+
+  const bgColorInput = document.getElementById("bg-color");
+  bgColorInput.oninput = () => {
+    document.documentElement.style.setProperty("--bg-color", bgColorInput.value);
+    localStorage.setItem("lifes_bg_color", bgColorInput.value);
+  };
+
+  const bgFileInput = document.getElementById("bg-file");
+  bgFileInput.onchange = () => {
+    const file = bgFileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target.result;
+      document.body.style.backgroundImage = `url('${url}')`;
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundRepeat = "no-repeat";
+      localStorage.setItem("lifes_bg_image", url);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const cardOpacityInput = document.getElementById("card-opacity");
+  cardOpacityInput.oninput = () => {
+    const val = cardOpacityInput.value;
+    document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${val})`);
+    localStorage.setItem("lifes_card_opacity", val);
+  };
+
+  const bg = localStorage.getItem("lifes_bg_color");
+  const img = localStorage.getItem("lifes_bg_image");
+  const op = localStorage.getItem("lifes_card_opacity");
+  if (bg) {
+    document.documentElement.style.setProperty("--bg-color", bg);
+    bgColorInput.value = bg;
+  }
+  if (img) {
+    document.body.style.backgroundImage = `url('${img}')`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundRepeat = "no-repeat";
+  }
+  if (op) {
+    document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+    cardOpacityInput.value = op;
+  }
+
+  window.changePassword = async () => {
+    const pw = document.getElementById("new-password").value;
+    if (pw.length < 6) {
+      alert("6文字以上で入力してください。");
+      return;
+    }
+    const { error } = await client.auth.updateUser({ password: pw });
+    if (error) alert("変更失敗：" + error.message);
+    else alert("パスワードを変更しました。");
+  };
+
+  window.resetStyles = () => {
+    localStorage.removeItem("lifes_bg_color");
+    localStorage.removeItem("lifes_bg_image");
+    localStorage.removeItem("lifes_card_opacity");
+    document.documentElement.style.setProperty("--bg-color", "#f0f4f8");
+    document.documentElement.style.setProperty("--card-color", "rgba(255,255,255,0.9)");
+    document.body.style.backgroundImage = "";
+    document.getElementById("bg-color").value = "#f0f4f8";
+    document.getElementById("card-opacity").value = "0.9";
+  };
+
+  window.logout = async () => {
+    await client.auth.signOut();
+    localStorage.clear();
+    location.href = "index.html";
+  };
+}, 0);
+</script>

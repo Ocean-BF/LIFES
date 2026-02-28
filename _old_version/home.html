@@ -1,0 +1,89 @@
+<div class="logo">
+  <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
+</div>
+
+<div class="card">
+  <div class="clock-time" id="clock-time">--:--</div>
+  <div class="clock-date" id="clock-date">--/--/--</div>
+</div>
+
+<div class="card" style="text-align: center;">
+  <div id="weather">
+    <div style="font-size: 18px;">天気を取得中...</div>
+  </div>
+</div>
+
+<style>
+  .logo {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+  }
+  .logo .L { color: #f44336; }
+  .logo .I { color: #ff9800; }
+  .logo .F { color: #ffeb3b; }
+  .logo .E { color: #4caf50; }
+  .logo .S { color: #2196f3; }
+  .clock-time {
+    font-size: 28px;
+    font-weight: bold;
+  }
+  .clock-date {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #666;
+  }
+</style>
+
+<script>
+  function updateClock() {
+    const time = document.getElementById("clock-time");
+    const date = document.getElementById("clock-date");
+    if (!time || !date) return;
+
+    const now = new Date();
+    time.textContent = now.getHours().toString().padStart(2, '0') + ":" +
+                       now.getMinutes().toString().padStart(2, '0');
+    date.textContent = now.getFullYear() + "/" +
+                       (now.getMonth() + 1).toString().padStart(2, '0') + "/" +
+                       now.getDate().toString().padStart(2, '0') + "（" +
+                       "日月火水木金土"[now.getDay()] + "）";
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  async function fetchWeather(lat, lon) {
+    const apiKey = "2e182b7d1ed7a9117780e6c105646376";
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=ja&appid=${apiKey}`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const desc = data.weather[0].description;
+      const icon = data.weather[0].icon;
+      const temp = data.main.temp.toFixed(1);
+      const city = data.name;
+      const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+      document.getElementById("weather").innerHTML = `
+        <img src="${iconUrl}" alt="${desc}" style="width: 48px; vertical-align: middle;" />
+        <div style="margin-top: 5px;">${city}：${desc}（${temp}℃）</div>`;
+    } catch (err) {
+      document.getElementById("weather").textContent = "天気情報の取得に失敗しました";
+    }
+  }
+
+  function getWeather() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+        err => fetchWeather(34.6901, 135.1956) // fallback: 神戸
+      );
+    } else {
+      fetchWeather(34.6901, 135.1956);
+    }
+  }
+
+  getWeather();
+</script>

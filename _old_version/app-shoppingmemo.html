@@ -1,0 +1,134 @@
+<!-- app-shoppingmemo.html -->
+<div id="shoppingmemo-container" style="background-color: #e3f2fd; padding: 10px;">
+  <h2 style="text-align:center;">🛒 買い物メモ</h2>
+  <div id="shoppingmemo-list" class="memo-list"></div>
+  <button id="shoppingmemo-add" class="add-button">＋ 追加</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+(async () => {
+  const supabase = window.supabaseClient;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const userId = user.id;
+  const container = document.getElementById("shoppingmemo-list");
+  const addButton = document.getElementById("shoppingmemo-add");
+  window.shoppingmemo_data = [];
+  let sortable = null;
+
+  const fetchData = async () => {
+    const { data, error } = await supabase
+      .from("shopping_memos")
+      .select("*")
+      .eq("user_id", userId)
+      .order("sort_order", { ascending: true });
+    if (error) return;
+    window.shoppingmemo_data = data;
+    render();
+  };
+
+  const render = () => {
+    container.innerHTML = "";
+    window.shoppingmemo_data.forEach(row => {
+      const card = document.createElement("div");
+      card.className = "memo-card";
+      card.setAttribute("data-id", row.id);
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = row.item || "";
+      input.className = "memo-input";
+      input.onchange = () => updateItem(row.id, input.value);
+
+      const del = document.createElement("button");
+      del.textContent = "×";
+      del.className = "memo-delete";
+      del.onclick = () => deleteItem(row.id);
+
+      card.appendChild(input);
+      card.appendChild(del);
+      container.appendChild(card);
+    });
+
+    // Sortableインスタンスが未作成なら作成
+    if (!sortable) {
+      sortable = Sortable.create(container, {
+        animation: 150,
+        onEnd: async () => {
+          const ids = [...container.children].map(el => el.getAttribute("data-id"));
+          for (let i = 0; i < ids.length; i++) {
+            await supabase.from("shopping_memos").update({ sort_order: i }).eq("id", ids[i]);
+          }
+        }
+      });
+    }
+  };
+
+  const addItem = async () => {
+    const { error } = await supabase.from("shopping_memos").insert([{
+      user_id: userId,
+      item: "",
+      sort_order: window.shoppingmemo_data.length
+    }]);
+    if (!error) fetchData();
+  };
+
+  const updateItem = async (id, value) => {
+    await supabase.from("shopping_memos").update({ item: value }).eq("id", id);
+  };
+
+  const deleteItem = async (id) => {
+    await supabase.from("shopping_memos").delete().eq("id", id);
+    fetchData();
+  };
+
+  addButton.onclick = addItem;
+  fetchData();
+})();
+</script>
+
+<style>
+#shoppingmemo-container {
+  border-radius: 12px;
+}
+.memo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.memo-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.memo-input {
+  flex: 1;
+  font-size: 1rem;
+  border: none;
+  background: transparent;
+  outline: none;
+}
+.memo-delete {
+  font-size: 1rem;
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+}
+.add-button {
+  width: 100%;
+  padding: 10px;
+  background: #90caf9;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #003c8f;
+  font-weight: bold;
+  margin-top: 10px;
+}
+</style>

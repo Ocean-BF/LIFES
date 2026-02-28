@@ -1,0 +1,183 @@
+<!-- comparison.html | カテゴリ: life | スマホ専用価格比較アプリ v7 -->
+<div class="section">
+  <div id="itemsContainer"></div>
+  <div class="row buttons">
+    <button id="addItem" class="btn-submit">＋ 商品を追加</button>
+    <button id="resetAll" class="btn-reset">リセット</button>
+  </div>
+</div>
+
+<script>
+  if (typeof window.comparisonAppLoaded === "undefined") {
+    window.comparisonAppLoaded = false;
+
+    window.itemCount = 0;
+
+    function createItem() {
+      window.itemCount++;
+      const div = document.createElement("div");
+      div.className = "comparison-item section";
+      div.innerHTML = `
+        <div class="row">
+          <div class="col label">商品${String.fromCharCode(64 + window.itemCount)}</div>
+        </div>
+        <div class="row">
+          <div class="col label">価格（円）</div>
+          <div class="col input"><input type="number" class="price" min="0" step="any" /></div>
+        </div>
+        <div class="row">
+          <div class="col label">個数</div>
+          <div class="col input"><input type="number" class="quantity" min="1" value="1" /></div>
+        </div>
+        <div class="row">
+          <div class="col label">内容量</div>
+          <div class="col input"><input type="number" class="volume" min="1" value="1" /></div>
+        </div>
+        <div class="row">
+          <div class="col label">単価</div>
+          <div class="col input"><div class="unit-price">-- 円</div></div>
+        </div>
+      `;
+      return div;
+    }
+
+    function calcAll() {
+      const items = document.querySelectorAll(".comparison-item");
+      let cheapest = Infinity;
+      let cheapestIndex = -1;
+
+      items.forEach((item, index) => {
+        const price = parseFloat(item.querySelector(".price").value);
+        const quantity = parseFloat(item.querySelector(".quantity").value);
+        const volume = parseFloat(item.querySelector(".volume").value);
+        const display = item.querySelector(".unit-price");
+
+        if (!isNaN(price) && quantity > 0 && volume > 0) {
+          const unit = price / quantity / volume;
+          display.textContent = unit.toFixed(1) + " 円";
+          if (unit < cheapest) {
+            cheapest = unit;
+            cheapestIndex = index;
+          }
+        } else {
+          display.textContent = "-- 円";
+        }
+      });
+
+      items.forEach((item, idx) => {
+        item.classList.toggle("highlight", idx === cheapestIndex);
+      });
+    }
+
+    function addItem() {
+      const container = document.getElementById("itemsContainer");
+      const item = createItem();
+      container.appendChild(item);
+      item.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", calcAll);
+      });
+      calcAll();
+    }
+
+    function resetAll() {
+      document.getElementById("itemsContainer").innerHTML = "";
+      window.itemCount = 0;
+      addItem();
+      addItem();
+    }
+
+    document.getElementById("addItem").addEventListener("click", addItem);
+    document.getElementById("resetAll").addEventListener("click", resetAll);
+  }
+
+  // 初期化関数：LIFESのloadPageで呼び出す
+  window.initComparisonApp = function () {
+    window.comparisonAppLoaded = false;
+    if (!window.comparisonAppLoaded) {
+      resetAll();
+      window.comparisonAppLoaded = true;
+    }
+  };
+
+  // 保険として、初回読み込み時に自動実行
+  if (document.readyState !== "loading") {
+    initComparisonApp();
+  } else {
+    document.addEventListener("DOMContentLoaded", initComparisonApp);
+  }
+</script>
+
+<style>
+  .section {
+    padding: 10px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+    gap: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .col.label {
+    width: 33%;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+
+  .col.input {
+    width: 58%;
+  }
+
+  .col.input input {
+    width: 100%;
+    padding: 6px;
+    font-size: 1.2rem;
+    box-sizing: border-box;
+    font-weight: bold;
+  }
+
+  .unit-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .highlight {
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    padding: 4px;
+  }
+
+  .row.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .btn-reset, .btn-submit {
+    width: 45%;
+    padding: 10px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 6px;
+    text-align: center;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+  }
+
+  .btn-reset {
+    background-color: #f5bcbc;
+    border: 1px solid #cc9999;
+    color: #333;
+  }
+
+  .btn-submit {
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+  }
+</style>

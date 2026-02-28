@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>管理者パネル</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; font-size: 14px; }
+    header { background: #4caf50; color: white; padding: 16px; text-align: center; font-size: 18px; }
+    main { padding: 10px; }
+    .hidden { display: none; }
+    .table-container { overflow-x: auto; background: white; border-radius: 8px; }
+    table { width: 100%; min-width: 700px; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ddd; padding: 6px; text-align: left; white-space: nowrap; }
+    th { background-color: #f0f0f0; }
+    input.edit-input { font-size: 14px; width: 100%; padding: 2px; }
+    button { font-size: 12px; padding: 6px 10px; margin: 4px 2px; border-radius: 4px; border: none; cursor: pointer; }
+    button.toggle.on { background: #4caf50; color: white; }
+    button.toggle.off { background: #ccc; color: #444; }
+    button.delete { background: #f44336; color: white; }
+    button.updown { background: #2196f3; color: white; }
+    #add-app-btn { background: #4caf50; color: white; }
+    button.save { background: #009688; color: white; }
+  </style>
+</head>
+<body>
+  <header>管理者パネル</header>
+  <main>
+    <div id="admin-panel" class="hidden">
+      <button id="add-app-btn">＋ アプリを追加</button>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>アイコン</th><th>タイトル</th><th>カテゴリ</th><th>パス</th>
+                <th>公開</th><th>順番</th><th>操作</th></tr>
+          </thead>
+          <tbody id="app-table-body"><tr><td colspan="7">読み込み中...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+    );
+
+    window.onload = async () => {
+      const session = (await client.auth.getSession()).data.session;
+      if (!session) return location.href = "index.html";
+      const user = (await client.auth.getUser()).data.user;
+      const admin = await client.from("profiles").select("is_admin").eq("id", user.id).single();
+      if (!admin.data?.is_admin) return alert("管理者のみアクセス可能です。");
+      document.getElementById("admin-panel").classList.remove("hidden");
+      document.getElementById("add-app-btn").onclick = insertBlankRow;
+      loadApps();
+    };
+
+    async function loadApps() {
+      const tbody = document.getElementById("app-table-body");
+      tbody.innerHTML = "<tr><td colspan='7'>読み込み中...</td></tr>";
+      const { data } = await client.from("life-apps").select("*").order("order", { ascending: true });
+      tbody.innerHTML = "";
+      data.forEach(app => tbody.appendChild(buildRow(app)));
+    }
+
+    function buildRow(app, isNew = false) {
+      const tr = document.createElement("tr");
+
+      function editableCell(field, value, refObj) {
+        const td = document.createElement("td");
+        td.textContent = value || "";
+        td.onclick = () => {
+          const input = document.createElement("input");
+          input.value = value || "";
+          input.className = "edit-input";
+          td.textContent = "";
+          td.appendChild(input);
+          input.focus();
+
+          input.onblur = () => {
+            const newValue = input.value.trim();
+            td.textContent = newValue;
+            if (refObj) refObj[field] = field === "order" ? parseInt(newValue) : newValue;
+          };
+
+          input.onkeydown = e => {
+            if (e.key === "Enter") input.blur();
+            if (e.key === "Escape") td.textContent = value;
+          };
+        };
+        return td;
+      }
+
+      if (isNew) {
+        const newApp = { icon: "", title: "", category: "", path: "", order: null };
+        tr.appendChild(editableCell("icon", "", newApp));
+        tr.appendChild(editableCell("title", "", newApp));
+        tr.appendChild(editableCell("category", "", newApp));
+        tr.appendChild(editableCell("path", "", newApp));
+        tr.appendChild(document.createElement("td"));
+        tr.appendChild(editableCell("order", "", newApp));
+
+        const actionTd = document.createElement("td");
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "保存";
+        saveBtn.className = "save";
+        saveBtn.onclick = async () => {
+          if (!newApp.title || !newApp.category || !newApp.path || isNaN(newApp.order)) {
+            alert("すべての項目を入力してください");
+            return;
+          }
+          newApp.is_public = false;
+          await client.from("life-apps").insert([newApp]);
+          loadApps();
+        };
+        actionTd.appendChild(saveBtn);
+        tr.appendChild(actionTd);
+      } else {
+        function editable(id, field, value) {
+          return editableCell(field, value, { [field]: value, id });
+        }
+        tr.appendChild(editable(app.id, "icon", app.icon));
+        tr.appendChild(editable(app.id, "title", app.title));
+        tr.appendChild(editable(app.id, "category", app.category));
+        tr.appendChild(editable(app.id, "path", app.path));
+
+        const tdToggle = document.createElement("td");
+        const toggleBtn = document.createElement("button");
+        toggleBtn.textContent = app.is_public ? "公開中" : "非公開";
+        toggleBtn.className = "toggle " + (app.is_public ? "on" : "off");
+        toggleBtn.onclick = () => toggleVisibility(app.id, !app.is_public);
+        tdToggle.appendChild(toggleBtn);
+        tr.appendChild(tdToggle);
+
+        tr.appendChild(editable(app.id, "order", app.order));
+
+        const tdActions = document.createElement("td");
+        const upBtn = document.createElement("button");
+        upBtn.textContent = "↑";
+        upBtn.className = "updown";
+        upBtn.onclick = () => moveOrder(app.id, -1);
+        const downBtn = document.createElement("button");
+        downBtn.textContent = "↓";
+        downBtn.className = "updown";
+        downBtn.onclick = () => moveOrder(app.id, 1);
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "削除";
+        deleteBtn.className = "delete";
+        deleteBtn.onclick = () => deleteApp(app.id);
+        tdActions.append(upBtn, downBtn, deleteBtn);
+        tr.appendChild(tdActions);
+      }
+
+      return tr;
+    }
+
+    function insertBlankRow() {
+      const tr = buildRow(null, true);
+      document.getElementById("app-table-body").appendChild(tr);
+    }
+
+    async function toggleVisibility(id, newValue) {
+      await client.from("life-apps").update({ is_public: newValue }).eq("id", id);
+      await new Promise(r => setTimeout(r, 300));
+      loadApps();
+    }
+
+    async function deleteApp(id) {
+      if (!confirm("本当に削除しますか？")) return;
+      await client.from("life-apps").delete().eq("id", id);
+      loadApps();
+    }
+
+    async function moveOrder(id, direction) {
+      const { data } = await client.from("life-apps").select("*").order("order", { ascending: true });
+      const index = data.findIndex(app => app.id === id);
+      const swapIndex = index + direction;
+      if (swapIndex < 0 || swapIndex >= data.length) return;
+      const current = data[index], target = data[swapIndex];
+      await client.from("life-apps").update({ order: target.order }).eq("id", current.id);
+      await client.from("life-apps").update({ order: current.order }).eq("id", target.id);
+      loadApps();
+    }
+  </script>
+</body>
+</html>

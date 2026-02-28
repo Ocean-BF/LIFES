@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LIFES - ログイン</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 span {
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 8px;
+    }
+    h1 .L { color: #f44336; }
+    h1 .I { color: #ff9800; }
+    h1 .F { color: #ffeb3b; }
+    h1 .E { color: #4caf50; }
+    h1 .S { color: #2196f3; }
+    .login-box {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 80%;
+      max-width: 300px;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px;
+      font-size: 16px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #43a047;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    <span class="L">L</span><span class="I">I</span><span class="F">F</span><span class="E">E</span><span class="S">S</span>
+  </h1>
+  <div class="login-box">
+    <input type="email" id="email" placeholder="メールアドレス" />
+    <input type="password" id="password" placeholder="パスワード" />
+    <button onclick="login()">ログイン</button>
+  </div>
+
+  <script>
+    const client = supabase.createClient(
+      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+    );
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert("ログイン失敗: " + error.message);
+      } else {
+        localStorage.setItem("lifes_login", "true");
+        location.href = "top.html";
+      }
+    }
+
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        localStorage.setItem("lifes_login", "true");
+        location.href = "top.html";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,799 @@
+<!-- unitcheck-v9: 完全修正版 -->
+<div class="tab-buttons">
+  <button id="formTab" class="tab-button active">入力フォーム</button>
+  <button id="historyTab" class="tab-button">履歴一覧</button>
+</div>
+
+<!-- 入力フォーム -->
+<div id="formSection" class="section">
+  
+<form id="unitForm">
+  <div class="row">
+    <div class="col label">商品名</div>
+    <div class="col input"><input id="item_name"></div>
+    <div class="col button"><button type="button" class="dropdown-btn" data-target="item_name">▼</button></div>
+  </div>
+  <div class="row">
+    <div class="col label">カテゴリ</div>
+    <div class="col input"><input id="category"></div>
+    <div class="col button"><button type="button" class="dropdown-btn" data-target="category">▼</button></div>
+  </div>
+  <div class="row">
+    <div class="col label">価格</div>
+    <div class="col input"><input id="price"></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row">
+    <div class="col label">数量</div>
+    <div class="col input"><input id="quantity" value="1"></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row">
+    <div class="col label">内容量</div>
+    <div class="col input"><input id="volume" value="1"></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row">
+    <div class="col label">店名</div>
+    <div class="col input"><input id="shop_name"></div>
+    <div class="col button"><button type="button" class="dropdown-btn" data-target="shop_name">▼</button></div>
+  </div>
+  <div class="row">
+    <div class="col label">単価</div>
+    <div class="col input"><div id="unitPriceDisplay" class="unit-price">-- 円</div></div>
+    <div class="col button"></div>
+  </div>
+  <div class="row buttons">
+    <button type="button" id="taxIn">税込</button>
+    <button type="button" id="taxReset">非課税</button>
+    <button type="button" id="taxOut">税抜</button>
+  </div>
+  <div class="row submit-row">
+  <button type="button" id="resetButton" class="btn-reset">リセット</button>
+  <button type="submit" id="submitButton" class="btn-submit">登録</button>
+<div id="status" class="status"></div>
+</div>
+</form>
+
+</div>
+
+<!-- 履歴 -->
+<div id="historySection" class="section" style="display:none;">
+
+<div class="filter-row">
+  <div class="row">
+    <label>商品名</label>
+    <select id="filterItem"><option value="">すべて</option></select>
+  </div>
+  <div class="row">
+    <label>カテゴリ</label>
+    <select id="filterCategory"><option value="">すべて</option></select>
+  </div>
+</div>
+
+<div class="filter-row">
+  <div class="row">
+    
+  </div>
+</div>
+
+    
+  </div>
+  <div id="historyListWrapper">
+  <div id="historyList"></div>
+</div>
+</div>
+
+<!-- モーダル -->
+<div id="modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <ul id="modalList"></ul>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <p>本当に削除しますか？</p>
+    <button id="confirmDeleteBtn">削除</button>
+    <button id="cancelDeleteBtn">キャンセル</button>
+  </div>
+</div>
+
+
+<script>
+
+const supabaseClient = supabase.createClient(
+  'https://mzuqsfoqkaopxhyggwyk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0'
+);
+let selectedTax = null;
+
+let originalPrice = null;
+const priceInput = document.getElementById("price");
+  const quantityInput = document.getElementById("quantity");
+  const volumeInput = document.getElementById("volume");
+  const unitPriceDisplay = document.getElementById("unitPriceDisplay");
+  const status = document.getElementById("status");
+
+  function calcUnitPrice() {
+    const price = parseFloat(priceInput.value);
+    const quantity = parseFloat(quantityInput.value || 1);
+    const volume = parseFloat(volumeInput.value || 1);
+    if (!isNaN(price) && quantity > 0 && volume > 0) {
+      const unit = price / quantity / volume;
+      unitPriceDisplay.textContent = `${unit.toFixed(1)} 円`;
+      return unit;
+    }
+    unitPriceDisplay.textContent = "-- 円";
+    return null;
+  }
+
+  priceInput.addEventListener("input", () => {
+  originalPrice = parseFloat(priceInput.value);
+  calcUnitPrice();
+});
+  quantityInput.addEventListener("input", calcUnitPrice);
+  volumeInput.addEventListener("input", calcUnitPrice);
+
+  document.getElementById("taxIn").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value * 1.1);
+    calcUnitPrice();
+  });
+
+  document.getElementById("taxOut").addEventListener("click", () => {
+    const value = parseFloat(priceInput.value);
+    if (!isNaN(value)) priceInput.value = Math.round(value / 1.1);
+    calcUnitPrice();
+  });
+
+  const dropdownButtons = document.querySelectorAll(".dropdown-btn");
+  const modal = document.getElementById("modal");
+  const modalList = document.getElementById("modalList");
+  let currentTargetInput = null;
+
+  dropdownButtons.forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const targetId = btn.getAttribute("data-target");
+      currentTargetInput = document.getElementById(targetId);
+      const supabase = window.supabaseClient;
+      const { data } = await supabase.from("unit_prices").select(targetId);
+      const values = [...new Set(data.map(r => r[targetId]).filter(Boolean))];
+      modalList.innerHTML = "";
+      values.forEach(v => {
+        const li = document.createElement("li");
+        li.textContent = v;
+        li.style.padding = "8px";
+        li.style.cursor = "pointer";
+        li.addEventListener("click", () => {
+          currentTargetInput.value = v;
+          modal.style.display = "none";
+        });
+        modalList.appendChild(li);
+      });
+      modal.style.display = "block";
+    });
+  });
+
+  window.addEventListener("click", e => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  document.getElementById("unitForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const unit = calcUnitPrice();
+    const supabase = window.supabaseClient;
+    const { error } = await supabase.from("unit_prices").insert([{
+      item_name: document.getElementById("item_name").value,
+      category: document.getElementById("category").value,
+      price: parseFloat(priceInput.value),
+      quantity: parseFloat(quantityInput.value),
+      volume: parseFloat(volumeInput.value),
+      unit_price: unit,
+      shop_name: document.getElementById("shop_name").value
+    }]);
+    if (error) {
+      status.textContent = "登録に失敗しました：" + error.message;
+    } else {
+      status.textContent = "登録しました。";
+      setTimeout(() => { status.textContent = ""; }, 3000);
+      document.getElementById("historyListWrapper").style.display = "none";
+      document.getElementById("unitForm").reset();
+      originalPrice = null;
+      calcUnitPrice();
+      loadHistory();
+      loadOptions();
+    }
+  });
+
+  async function loadOptions() {
+  const itemSelect = document.getElementById("filterItem");
+  const catSelect = document.getElementById("filterCategory");
+    const supabase = window.supabaseClient;
+    const { data } = await supabase.from("unit_prices").select("item_name, category, shop_name");
+    if (!data) return;
+    const items = [...new Set(data.map(r => r.item_name).filter(Boolean))];
+    const cats = [...new Set(data.map(r => r.category).filter(Boolean))];
+    const shops = [...new Set(data.map(r => r.shop_name).filter(Boolean))];const setFilter = (id, values) => {
+      const el = document.getElementById(id);
+      el.innerHTML = '<option value="">すべて</option>';
+      values.forEach(v => {
+        const option = document.createElement("option");
+        option.value = v;
+        option.textContent = v;
+        el.appendChild(option);
+      });
+    };
+    setFilter("filterItem", items);
+    setFilter("filterCategory", cats);
+  }
+
+  async function loadHistory() {
+    const supabase = window.supabaseClient;
+    const { data } = await supabase.from("unit_prices").select("*");
+    const container = document.getElementById("historyList");
+    if (!data) {
+      container.textContent = "履歴の取得に失敗しました。";
+      return;
+    }
+    const filterItem = document.getElementById("filterItem").value;
+    const filterCategory = document.getElementById("filterCategory").value;
+    const filtered = data.filter(r =>
+      (!filterItem || r.item_name === filterItem) &&
+      (!filterCategory || r.category === filterCategory)
+    );
+    if (filtered.length === 0) {
+      container.textContent = "登録された履歴がありません。";
+      return;
+    }
+    const grouped = {};
+    filtered.forEach(row => {
+      if (!row.item_name) return;
+      if (!grouped[row.item_name]) grouped[row.item_name] = [];
+      grouped[row.item_name].push(row);
+    });
+    container.innerHTML = "";
+    Object.entries(grouped).forEach(([item, rows]) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "table-wrapper";
+      const table = document.createElement("table");
+      table.className = "history-table";
+      table.innerHTML = `
+        <thead>
+          <tr><th colspan="6">${item}</th></tr>
+          <tr><th>カテゴリ</th><th>店名</th><th>単価</th><th>登録日</th><th>編集</th><th>削除</th></tr>
+        </thead>`;
+      const tbody = document.createElement("tbody");
+      rows.sort((a, b) => a.unit_price - b.unit_price);
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.category || ""}</td>
+          <td>${r.shop_name || ""}</td>
+          <td>${r.unit_price?.toFixed(1)}</td>
+          <td>${r.created_at?.split("T")[0]}</td>
+          <td><button class="edit-btn">編集</button></td>
+          <td><button class="delete-btn">削除</button></td>`;
+        tbody.appendChild(tr);
+        tr.querySelector(".edit-btn").addEventListener("click", () => {
+          const tds = tr.querySelectorAll("td");
+          const original = [...tds].map(td => td.textContent);
+          tr.innerHTML = `
+            <td><input value="${original[0]}"></td>
+            <td><input value="${original[1]}"></td>
+            <td><input value="${original[2]}"></td>
+            <td>${original[3]}</td>
+            <td><button class="save-btn">保存</button></td>
+            <td><button class="cancel-btn">キャンセル</button></td>`;
+          tr.querySelector(".save-btn").addEventListener("click", async () => {
+            const inputs = tr.querySelectorAll("input");
+            const supabase = window.supabaseClient;
+            await supabase.from("unit_prices").update({
+              category: inputs[0].value,
+              shop_name: inputs[1].value,
+              unit_price: parseFloat(inputs[2].value)
+            }).eq("item_name", item);
+            loadHistory();
+          });
+          tr.querySelector(".cancel-btn").addEventListener("click", loadHistory);
+        });
+
+        tr.querySelector(".delete-btn").addEventListener("click", () => {
+          deleteTarget = { item, created_at: r.created_at };
+          document.getElementById("deleteModal").style.display = "flex";
+        });
+
+      });
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      container.appendChild(wrapper);
+    });
+  }
+
+  document.getElementById("formTab").addEventListener("click", () => {
+  
+    document.getElementById("formSection").style.display = "";
+    document.getElementById("historyListWrapper").style.display = "none";
+    document.getElementById("historySection").style.display = "none";
+    document.getElementById("formTab").classList.add("active");
+    document.getElementById("historyTab").classList.remove("active");
+  });
+
+  document.getElementById("historyTab").addEventListener("click", () => {
+    loadOptions();
+    loadHistory();
+    document.getElementById("formSection").style.display = "none";
+    document.getElementById("historySection").style.display = "";
+    document.getElementById("historyListWrapper").style.display = "block";
+    document.getElementById("formTab").classList.remove("active");
+    document.getElementById("historyTab").classList.add("active");
+  });
+
+  document.getElementById("filterItem").addEventListener("change", loadHistory);
+  document.getElementById("filterCategory").addEventListener("change", loadHistory);
+  window.addEventListener("DOMContentLoaded", () => {
+    loadOptions();
+    calcUnitPrice();
+  });
+
+let deleteTarget = null;
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+  const supabase = window.supabaseClient;
+  if (deleteTarget) {
+    await supabase.from("unit_prices").delete()
+      .eq("item_name", deleteTarget.item)
+      .eq("created_at", deleteTarget.created_at);
+    document.getElementById("deleteModal").style.display = "none";
+    loadHistory();
+  }
+});
+document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+  document.getElementById("deleteModal").style.display = "none";
+});
+
+document.getElementById("resetButton").addEventListener("click", () => {
+  originalPrice = null;
+  document.getElementById("unitForm").reset();
+      originalPrice = null;
+  calcUnitPrice();
+  status.textContent = "";
+});
+
+
+  document.getElementById("taxReset").addEventListener("click", () => {
+    if (!isNaN(originalPrice)) {
+      priceInput.value = originalPrice;
+      calcUnitPrice();
+    }
+  });
+
+
+function setSelectOptions(id, values) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "すべて";
+  el.appendChild(allOption);
+  [...new Set(values)].forEach(v => {
+    const option = document.createElement("option");
+    option.value = v;
+    option.textContent = v;
+    el.appendChild(option);
+  });
+}
+
+</script>
+<style>
+  body {
+    font-family: sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tab-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+  }
+
+  .tab-button {
+    padding: 8px 16px;
+    border: 2px solid #007bff;
+    background: white;
+    font-weight: bold;
+    border-radius: 6px;
+    font-size: 1rem;
+    min-width: 100px;
+  }
+
+  .tab-button.active {
+    background: #007bff;
+    color: white;
+  }
+
+  .section {
+    padding: 10px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    margin: 10px 8px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .row input,
+  .row select {
+    flex: 1;
+    font-size: 1.2rem;
+    padding: 4px 8px;
+    font-weight: bold;
+  }
+
+  .row button {
+    font-size: 1rem;
+  }
+
+  .input-combo {
+    display: flex;
+    flex: 1;
+  }
+
+  .dropdown-btn {
+    margin-left: 4px;
+    padding: 4px 8px;
+    font-size: 1rem;
+    border: 1px solid #888;
+    background: white;
+    cursor: pointer;
+  }
+
+  label {
+    width: 30%;
+    min-width: 100px;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .unit-price {
+    font-size: 1.6rem;
+    font-weight: bold;
+  }
+
+  .buttons button,
+  
+
+  
+
+  .status {
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+    color: red;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  #historyListWrapper {
+    overflow-x: hidden;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+
+  .history-table {
+    min-width: 600px;
+    border-collapse: collapse;
+    background: white;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .history-table th,
+  .history-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
+  }
+
+  .history-table th[colspan] {
+    background: #f2f2f2;
+    font-size: 1.1rem;
+    text-align: left;
+  }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    width: 80%;
+  }
+
+  #modalList li:hover {
+    background: #e0e0e0;
+  }
+
+.input-combo {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+}
+.input-combo input {
+  flex: 1;
+  min-width: 0;
+}
+.dropdown-btn {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 1rem;
+  border: 1px solid #888;
+  background: white;
+  cursor: pointer;
+}
+
+
+.row {
+  display: flex;
+  align-items: center;
+  margin: 8px 4px;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+label {
+  width: 35%;
+  min-width: auto;
+  font-size: 1.1rem;
+}
+.input-combo {
+  display: flex;
+  width: 65%;
+}
+.input-combo input {
+  flex: 1;
+  min-width: 0;
+}
+
+
+.row {
+  display: flex;
+  align-items: center;
+  margin: 6px 4px;
+  gap: 6px;
+}
+.col.label {
+  width: 35%;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+.col.input {
+  width: 55%;
+}
+.col.button {
+  width: 10%;
+  text-align: right;
+}
+.col.button button {
+  width: 100%;
+  padding: 4px 6px;
+}
+.col.input input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+.unit-price {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+
+.section {
+  padding: 8px 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.col.label {
+  width: 33%;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.col.input {
+  width: 58%;
+}
+
+.col.button {
+  width: 9%;
+  text-align: right;
+}
+
+.col.button button {
+  width: 100%;
+  padding: 4px 6px;
+}
+
+.col.input input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+
+.row.buttons {
+  justify-content: center;
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+
+button.active {
+  background-color: #aaa;
+  color: white;
+  cursor: not-allowed;
+}
+
+
+.row.submit-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+button.btn-reset, button.btn-submit {
+  width: 120px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 4px;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-reset {
+  background-color: #f5bcbc;
+  border: 1px solid #cc9999;
+  color: #333;
+}
+
+.btn-submit {
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+}
+
+
+.row.submit-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+button.btn-reset, button.btn-submit {
+  width: 120px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 4px;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-reset {
+  background-color: #f5bcbc;
+  border: 1px solid #cc9999;
+  color: #333;
+}
+
+.btn-submit {
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+}
+
+.buttons button {
+  background: white;
+  border: 2px solid #007bff;
+  color: #007bff;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 0 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.history-table td:nth-child(4),
+.history-table th:nth-child(4) {
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+</style>
+<style>
+#deleteModal .modal-content {
+  text-align: center;
+  padding: 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  width: 90%;
+  max-width: 320px;
+}
+
+#deleteModal p {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+#confirmDeleteBtn, #cancelDeleteBtn {
+  padding: 10px 16px;
+  margin: 0 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#confirmDeleteBtn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+#confirmDeleteBtn:hover {
+  background-color: #c0392b;
+}
+
+#cancelDeleteBtn {
+  background-color: #bdc3c7;
+  color: white;
+}
+
+#cancelDeleteBtn:hover {
+  background-color: #95a5a6;
+}
+</style>

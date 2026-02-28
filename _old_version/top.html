@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabaseClient = supabase.createClient(
+      "https://mzuqsfoqkaopxhyggwyk.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dXFzZm9xa2FvcHhoeWdnd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NDcyMjksImV4cCI6MjA2MzEyMzIyOX0.vssAVSGX8kFf7v5wEN8Mxi4-4gb4hCSo3X3fEYp97u0"
+    );
+  </script>
+  <style>
+    :root {
+      --bg-color: #f0f4f8;
+      --card-color: rgba(255, 255, 255, 0.9);
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: sans-serif;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    main#main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      padding-bottom: 100px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background-color: var(--card-color);
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      border-top: 1px solid #ccc;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+    }
+
+    .bottom-nav a {
+      flex: 1;
+      text-decoration: none;
+      color: #444;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .bottom-nav span {
+      display: block;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <main id="main-content">
+    読み込み中...
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="#" onclick="loadPage('home.html')"><span>🏠</span>ホーム</a>
+    <a href="#" onclick="loadPage('life.html')"><span>🛍️</span>生活</a>
+    <a href="#" onclick="loadPage('edu.html')"><span>📘</span>教育</a>
+    <a href="#" onclick="loadPage('health.html')"><span>💊</span>健康</a>
+    <a href="#" onclick="loadPage('settings.html')"><span>⚙️</span>設定</a>
+  </nav>
+
+  <script>
+    async function loadPage(file) {
+      try {
+        sessionStorage.setItem("lifes_last_page", file);
+        const res = await fetch(file);
+        const htmlText = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        const main = document.getElementById("main-content");
+        main.innerHTML = "";
+        for (const node of doc.body.childNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
+            main.appendChild(node.cloneNode(true));
+          }
+        }
+
+        const scripts = doc.querySelectorAll("script");
+        scripts.forEach(oldScript => {
+          const newScript = document.createElement("script");
+          if (oldScript.src) {
+            newScript.src = oldScript.src;
+          } else {
+            newScript.textContent = oldScript.textContent;
+          }
+          document.body.appendChild(newScript);
+        });
+      } catch (e) {
+        console.error("ページ読み込みエラー:", e);
+        document.getElementById("main-content").textContent = "ページの読み込みに失敗しました。";
+      }
+    }
+
+    window.onload = () => {
+      const bg = localStorage.getItem("lifes_bg_color");
+      const img = localStorage.getItem("lifes_bg_image");
+      const op = localStorage.getItem("lifes_card_opacity");
+
+      if (bg) document.documentElement.style.setProperty("--bg-color", bg);
+      if (img) {
+        document.body.style.backgroundImage = `url('${img}')`;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundRepeat = "no-repeat";
+        document.body.style.backgroundPosition = "center";
+      }
+      if (op) document.documentElement.style.setProperty("--card-color", `rgba(255,255,255,${op})`);
+
+      const lastPage = sessionStorage.getItem("lifes_last_page") || "home.html";
+      loadPage(lastPage);
+    };
+  </script>
+</body>
+</html>
